@@ -21,100 +21,14 @@ let playerX = window.innerWidth / 2;
 let playerY = window.innerHeight - 80;
 
 let isPointerDown = false; let fireCooldownTimer = 0;
+// 【新增】Stop-The-World 减速计时器
+let stopTheWorldTimer = 0;
 
 const playerStats = {
     level: 1, xp: 0, xpNeeded: 10,
-    baseFireRateLimit: 12, fireRateModifier: 1.0, damage: 1, bulletSpeed: 8, multiShot: 1, spreadAngle: 15
+    baseFireRateLimit: 12, fireRateModifier: 1.0, damage: 1, bulletSpeed: 8, multiShot: 1, spreadAngle: 15,
+    pierce: 0, critRate: 0.0
 };
-
-class CodeBlock {
-    constructor() {
-        this.element = document.createElement('div');
-        this.element.className = 'code-block';
-
-        let rand = Math.random();
-        let def;
-        if (playerStats.level >= 5 && rand < 0.15) def = monsterDefs[4];
-        else if (playerStats.level >= 4 && rand < 0.30) def = monsterDefs[5];
-        else if (playerStats.level >= 3 && rand < 0.45) def = monsterDefs[3];
-        else if (rand < 0.65) def = monsterDefs[1];
-        else if (rand < 0.80) def = monsterDefs[2];
-        else def = monsterDefs[0];
-
-        this.type = def.type;
-        this.maxHp = Math.floor(def.hp * Math.pow(1.25, playerStats.level - 1));
-        this.hp = this.maxHp;
-        this.speedY = def.speedY * (1 + playerStats.level * 0.05);
-        this.speedX = 0;
-        this.xpValue = def.xp;
-
-        let displayCode = "";
-        if (def.isBase) {
-            const snippet = baseSnippets[Math.floor(Math.random() * baseSnippets.length)];
-            displayCode = snippet.code; this.errorText = snippet.err;
-        } else {
-            displayCode = def.code; this.errorText = def.err;
-        }
-
-        this.dashTimer = 0;
-        this.fireCooldown = Math.max(80, 200 - playerStats.level * 5);
-
-        this.element.innerHTML = `<div class="hp-bar-bg"><div class="hp-bar" style="background-color: ${def.color}"></div></div><span style="color: ${def.color}">${displayCode}</span>`;
-        this.element.style.border = `1px solid ${def.color}`;
-
-        container.appendChild(this.element);
-
-        const rect = this.element.getBoundingClientRect();
-        this.width = rect.width; this.height = rect.height;
-        this.x = Math.random() * (window.innerWidth - this.width);
-        this.y = -this.height;
-
-        this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
-    }
-
-    takeDamage(amount) {
-        this.hp -= amount;
-        const hpBar = this.element.querySelector('.hp-bar');
-        if (hpBar) hpBar.style.width = `${Math.max(0, (this.hp / this.maxHp) * 100)}%`;
-        return this.hp <= 0;
-    }
-
-    update() {
-        this.y += this.speedY;
-
-        switch (this.type) {
-            case 'tracker':
-                const centerX = this.x + this.width / 2;
-                if (Math.abs(centerX - playerX) > 5) {
-                    this.x += (centerX < playerX) ? 1.5 : -1.5;
-                }
-                break;
-            case 'shooter':
-                this.fireCooldown--;
-                if (this.fireCooldown <= 0) {
-                    enemyBullets.push(new EnemyBullet(this.x + this.width / 2, this.y + this.height, playerX, playerY));
-                    this.fireCooldown = Math.max(80, 200 - playerStats.level * 5);
-                }
-                break;
-            case 'dasher':
-                this.dashTimer--;
-                if (this.dashTimer <= 0) {
-                    this.speedX = (Math.random() > 0.5 ? 1 : -1) * (10 + Math.random() * 15);
-                    this.dashTimer = 80;
-                }
-                this.x += this.speedX;
-                this.speedX *= 0.85;
-                if (this.x < 0) this.x = 0;
-                if (this.x + this.width > window.innerWidth) this.x = window.innerWidth - this.width;
-                break;
-        }
-
-        this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
-        if (this.y + this.height > window.innerHeight - 60) { this.remove(); return false; }
-        return true;
-    }
-    remove() { this.element.remove(); }
-}
 
 class Bullet {
     constructor(startX, startY, angleDeg) {
@@ -128,6 +42,9 @@ class Bullet {
         this.x = startX - (this.width / 2);
         this.y = startY - 13 - this.height;
         this.angleDeg = angleDeg;
+
+        this.pierceLeft = playerStats.pierce;
+        this.hitSet = new Set();
 
         const angleRad = angleDeg * (Math.PI / 180);
         this.speedY = Math.cos(angleRad) * playerStats.bulletSpeed;
@@ -157,15 +74,15 @@ class EnemyBullet {
 
         const angleRad = Math.atan2(targetY - startY, targetX - startX);
         const speed = 4 + (playerStats.level * 0.2);
-
         this.speedX = Math.cos(angleRad) * speed;
         this.speedY = Math.sin(angleRad) * speed;
 
         this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
     }
-    update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
+    // 敌方弹幕也会受到全局减速影响
+    update(globalSpeedMult) {
+        this.x += this.speedX * globalSpeedMult;
+        this.y += this.speedY * globalSpeedMult;
         this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
         if (this.y > window.innerHeight || this.y < 0 || this.x < 0 || this.x > window.innerWidth) {
             this.remove(); return false;
@@ -175,7 +92,25 @@ class EnemyBullet {
     remove() { this.element.remove(); }
 }
 
-function createErrorExplosion(x, y, message) {
+// 【新增：漂浮伤害数字系统】
+function showDamageText(x, y, amount, type) {
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    // 加入一点随机偏移，防止数字重叠
+    const scatterX = (Math.random() - 0.5) * 30;
+    wrapper.style.transform = `translate3d(${x + scatterX}px, ${y}px, 0)`;
+    wrapper.style.zIndex = '100';
+
+    const txt = document.createElement('div');
+    txt.className = `damage-text damage-${type}`;
+    txt.textContent = type === 'player' ? `-${amount}` : amount;
+
+    wrapper.appendChild(txt); container.appendChild(wrapper);
+    txt.addEventListener('animationend', () => wrapper.remove());
+}
+
+// 统一的弹窗生成器，支持传入不同的 CSS 类名
+function createPopupInfo(x, y, message, cssClass, isCrit = false) {
     const wrapper = document.createElement('div');
     wrapper.style.position = 'absolute';
     wrapper.style.transform = `translate3d(${x}px, ${y}px, 0)`;
@@ -183,7 +118,12 @@ function createErrorExplosion(x, y, message) {
     wrapper.style.pointerEvents = 'none';
 
     const exp = document.createElement('div');
-    exp.className = 'error-explosion'; exp.textContent = message;
+    // 如果触发了暴击，在原有的样式类基础上附加 crit-explosion 覆盖样式
+    let finalClass = cssClass;
+    if (isCrit) finalClass += ' crit-explosion';
+
+    exp.className = finalClass;
+    exp.textContent = isCrit ? '[FATAL CRIT] ' + message : message;
 
     wrapper.appendChild(exp); container.appendChild(wrapper);
     exp.addEventListener('animationend', () => wrapper.remove());
@@ -191,10 +131,17 @@ function createErrorExplosion(x, y, message) {
 
 function spawnCodeBlock() {
     if (gameState !== 'PLAYING') return;
-    codeBlocks.push(new CodeBlock());
+    codeBlocks.push(new CodeBlock(container, playerStats.level));
     let spawnRate = Math.max(200, 1500 * Math.pow(0.85, playerStats.level - 1));
     clearInterval(blockSpawnInterval);
     blockSpawnInterval = setInterval(spawnCodeBlock, spawnRate);
+}
+
+function spawnBaseMonster(x, y) {
+    let mob = new CodeBlock(container, playerStats.level, true);
+    mob.x = x - mob.width / 2; mob.y = y;
+    mob.element.style.transform = `translate3d(${mob.x}px, ${mob.y}px, 0)`;
+    codeBlocks.push(mob);
 }
 
 function updateLivesDisplay() {
@@ -204,9 +151,18 @@ function updateLivesDisplay() {
 
 function takePlayerDamage(amount) {
     lives -= amount; updateLivesDisplay();
+    // 玩家受伤飘字
+    showDamageText(playerX, playerY - 20, amount, 'player');
+
     container.style.boxShadow = "inset 0 0 80px rgba(224, 108, 117, 0.8)";
     setTimeout(() => container.style.boxShadow = "none", 150);
     if (lives <= 0) endGame();
+}
+
+function healPlayer(amount) {
+    lives += amount;
+    updateLivesDisplay();
+    showDamageText(playerX, playerY - 20, `+${amount}`, 'crit'); // 借用暴击特效显示绿字回血
 }
 
 function gainXp(amount) {
@@ -223,21 +179,17 @@ function gainXp(amount) {
 
 function triggerLevelUp() {
     gameState = 'PAUSED';
-    const shuffled = [...upgradePool].sort(() => 0.5 - Math.random());
+    const pool = getUpgradePool(playerStats, healPlayer);
+    const shuffled = [...pool].sort(() => 0.5 - Math.random());
     const options = shuffled.slice(0, 3);
-    upgradeContainer.innerHTML = '';
-    options.forEach(opt => {
-        const card = document.createElement('div'); card.className = 'upgrade-card';
-        card.innerHTML = `<div class="upgrade-title">${opt.title}</div><div class="upgrade-desc">${opt.desc}</div>`;
-        card.onclick = () => { opt.apply(); resumeGame(); };
-        upgradeContainer.appendChild(card);
+
+    renderUpgrades(upgradeContainer, options, () => {
+        levelUpScreen.style.display = 'none';
+        gameState = 'PLAYING';
+        isPointerDown = false;
+        requestAnimationFrame(gameLoop);
     });
     levelUpScreen.style.display = 'flex';
-}
-
-function resumeGame() {
-    levelUpScreen.style.display = 'none'; gameState = 'PLAYING';
-    isPointerDown = false; requestAnimationFrame(gameLoop);
 }
 
 function fireBullets() {
@@ -253,20 +205,45 @@ function fireBullets() {
     }
 }
 
+function spawnEnemyBullet(x, y, targetX, targetY) {
+    enemyBullets.push(new EnemyBullet(x, y, targetX, targetY));
+}
+
 function checkCollisions() {
     for (let i = bullets.length - 1; i >= 0; i--) {
         for (let j = codeBlocks.length - 1; j >= 0; j--) {
             let b = bullets[i]; let c = codeBlocks[j];
+
             if (b.x < c.x + c.width && b.x + b.width > c.x && b.y < c.y + c.height && b.y + b.height > c.y) {
-                b.remove(); bullets.splice(i, 1);
-                if (c.takeDamage(playerStats.damage)) {
-                    const cx = c.x; const cy = c.y; const err = c.errorText; const xpVal = c.xpValue;
+                if (b.hitSet.has(c)) continue;
+                b.hitSet.add(c);
+
+                const isCrit = Math.random() < playerStats.critRate;
+                const actualDamage = isCrit ? playerStats.damage * 3 : playerStats.damage;
+
+                showDamageText(c.x + c.width / 2, c.y, actualDamage, isCrit ? 'crit' : 'normal');
+
+                if (c.takeDamage(actualDamage)) {
+                    const cx = c.x; const cy = c.y; const err = c.errorText; const xpVal = c.xpValue; const type = c.type;
                     c.remove(); codeBlocks.splice(j, 1);
                     score++; scoreElement.textContent = score;
-                    createErrorExplosion(cx, cy, err);
+
+                    if (type === 'gc_heal') {
+                        healPlayer(15);
+                        createPopupInfo(cx, cy, err, 'buff-explosion');
+                    } else if (type === 'gc_slow') {
+                        stopTheWorldTimer = 300;
+                        createPopupInfo(cx, cy, err, 'buff-explosion buff-slow-explosion');
+                    } else {
+                        // 【修复 2：将 isCrit 传回生成器，触发专属暴击样式】
+                        createPopupInfo(cx, cy, err, 'error-explosion', isCrit);
+                    }
+
                     gainXp(xpVal);
                 }
-                break;
+
+                if (b.pierceLeft > 0) { b.pierceLeft--; }
+                else { b.remove(); bullets.splice(i, 1); break; }
             }
         }
     }
@@ -281,18 +258,37 @@ function checkCollisions() {
 
 function gameLoop() {
     if (gameState !== 'PLAYING') return;
+
+    let globalSpeedMult = 1.0;
+    if (stopTheWorldTimer > 0) {
+        stopTheWorldTimer--;
+        globalSpeedMult = 0.3;
+        if (stopTheWorldTimer === 299) container.style.filter = 'hue-rotate(-20deg) brightness(1.2)';
+    } else if (stopTheWorldTimer === 0 && container.style.filter !== '') {
+        container.style.filter = '';
+    }
+
     if (isPointerDown && fireCooldownTimer <= 0) {
         fireBullets(); fireCooldownTimer = playerStats.baseFireRateLimit * playerStats.fireRateModifier;
     }
     if (fireCooldownTimer > 0) fireCooldownTimer--;
+
     for (let i = codeBlocks.length - 1; i >= 0; i--) {
-        if (!codeBlocks[i].update()) { codeBlocks.splice(i, 1); takePlayerDamage(5); }
+        let result = codeBlocks[i].update(playerX, playerY, playerStats.level, spawnEnemyBullet, spawnBaseMonster, globalSpeedMult);
+        if (result === false) {
+            codeBlocks.splice(i, 1); takePlayerDamage(5);
+        } else if (result === 'escaped') {
+            codeBlocks.splice(i, 1);
+        } else if (result === 'escaped_side') {
+            // 【新增：侧面怪物逃跑判定，仅扣 2 血以示惩戒】
+            codeBlocks.splice(i, 1); takePlayerDamage(2);
+        }
     }
     for (let i = bullets.length - 1; i >= 0; i--) {
         if (!bullets[i].update()) bullets.splice(i, 1);
     }
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
-        if (!enemyBullets[i].update()) enemyBullets.splice(i, 1);
+        if (!enemyBullets[i].update(globalSpeedMult)) enemyBullets.splice(i, 1);
     }
     checkCollisions();
     requestAnimationFrame(gameLoop);
@@ -306,19 +302,22 @@ function handlePlayerMove(clientX, clientY) {
 }
 
 function startGame() {
-    score = 0; lives = 20;
+    score = 0; lives = 20; stopTheWorldTimer = 0;
     playerStats.level = 1; playerStats.xp = 0; playerStats.xpNeeded = 10;
     playerStats.fireRateModifier = 1.0; playerStats.damage = 1;
     playerStats.bulletSpeed = 8; playerStats.multiShot = 1;
+    playerStats.pierce = 0; playerStats.critRate = 0.0;
 
     scoreElement.textContent = score; updateLivesDisplay(); levelDisplay.textContent = playerStats.level;
     xpBar.style.width = '0%';
+    container.style.filter = '';
 
     startScreen.style.display = 'none'; gameOverScreen.style.display = 'none';
     topUi.style.display = 'flex'; executionZone.style.display = 'flex'; playerElement.style.display = 'flex';
 
     codeBlocks.forEach(b => b.remove()); bullets.forEach(b => b.remove()); enemyBullets.forEach(b => b.remove());
-    document.querySelectorAll('.error-explosion').forEach(e => e.remove()); document.querySelectorAll('div[style*="z-index"]').forEach(e => { if (e.style.zIndex == '25') e.remove(); });
+    document.querySelectorAll('.error-explosion, .buff-explosion, .damage-text').forEach(e => e.remove());
+    document.querySelectorAll('div[style*="z-index"]').forEach(e => { if (e.style.zIndex == '25' || e.style.zIndex == '100') e.remove(); });
     codeBlocks = []; bullets = []; enemyBullets = []; isPointerDown = false;
 
     handlePlayerMove(window.innerWidth / 2, window.innerHeight - 80);

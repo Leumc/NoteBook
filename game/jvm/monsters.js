@@ -2,7 +2,10 @@ const baseSnippets = [
     { code: `String data = null;\ndata.length();`, err: `Exception in thread "main" java.lang.NullPointerException:\nCannot invoke "String.length()" because "data" is null\n\tat com.app.DataParser.process(DataParser.java:15)` },
     { code: `List items = null;\nitems.clear();`, err: `Exception in thread "main" java.lang.NullPointerException:\nCannot invoke "java.util.List.clear()" because "items" is null\n\tat com.app.MemoryManager.flush(MemoryManager.java:118)` },
     { code: `User u = null;\nu.getName();`, err: `Exception in thread "main" java.lang.NullPointerException:\nCannot read field "name" because "u" is null\n\tat com.app.UserDao.fetchName(UserDao.java:88)` },
-    { code: `int[] arr = null;\narr[0] = 1;`, err: `Exception in thread "main" java.lang.NullPointerException:\nCannot store to null array\n\tat com.app.ArrayHelper.mutate(ArrayHelper.java:102)` },
+    { code: `int[] arr = null;\narr[0] = 1;`, err: `Exception in thread "main" java.lang.NullPointerException:\nCannot store to null array\n\tat com.app.ArrayHelper.mutate(ArrayHelper.java:102)` }
+];
+
+const sideSnippets = [
     { code: `File f = null;\nf.delete();`, err: `Exception: Cannot invoke "File.delete()" because "f" is null` },
     { code: `Socket s = null;\ns.close();`, err: `Exception: Cannot invoke "Socket.close()" because "s" is null` }
 ];
@@ -39,10 +42,10 @@ class CodeBlock {
         } else {
             let rand = Math.random();
             // 重新分配生成概率，加入侧面怪
-            if (currentLevel >= 4 && rand < 0.10) def = monsterDefs[10]; // side_sniper
-            else if (currentLevel >= 2 && rand < 0.20) def = monsterDefs[9]; // side_basic
-            else if (currentLevel >= 2 && rand < 0.24) def = monsterDefs[11]; // gc_heal
-            else if (currentLevel >= 3 && rand < 0.28) def = monsterDefs[12]; // gc_slow
+            if (currentLevel >= 4 && rand < 0.10) def = monsterDefs[9]; // side_sniper
+            else if (currentLevel >= 2 && rand < 0.20) def = monsterDefs[8]; // side_basic
+            else if (currentLevel >= 2 && rand < 0.24) def = monsterDefs[10]; // gc_heal
+            else if (currentLevel >= 3 && rand < 0.28) def = monsterDefs[11]; // gc_slow
             else if (currentLevel >= 6 && rand < 0.35) def = monsterDefs[6]; // Spawner
             else if (currentLevel >= 5 && rand < 0.42) def = monsterDefs[7]; // Wobbler
             else if (currentLevel >= 4 && rand < 0.50) def = monsterDefs[4]; // Shooter
