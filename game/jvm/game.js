@@ -284,7 +284,7 @@ function updateEventTimerUI(ms) {
 function spawnCodeBlock() {
     if (gameState !== 'PLAYING' || activeBoss !== null) return;
     codeBlocks.push(new CodeBlock(container, playerStats.level));
-    let spawnRate = Math.max(400, 2500 * Math.pow(0.88, playerStats.level - 1));
+    let spawnRate = Math.max(200, 1500 * Math.pow(0.85, playerStats.level - 1));
     clearInterval(blockSpawnInterval);
     blockSpawnInterval = setInterval(spawnCodeBlock, spawnRate);
 }
@@ -550,7 +550,7 @@ function startGame() {
 
     gameState = 'PLAYING';
     if (blockSpawnInterval) clearInterval(blockSpawnInterval);
-    blockSpawnInterval = setInterval(spawnCodeBlock, 2000); // 略微提升前期的起步速度
+    blockSpawnInterval = setInterval(spawnCodeBlock, 1500); // 加快初始生成速度
     
     if (autoRegenInterval) clearInterval(autoRegenInterval);
     autoRegenInterval = setInterval(() => {
