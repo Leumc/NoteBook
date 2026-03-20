@@ -27,42 +27,6 @@ const playerStats = {
     baseFireRateLimit: 12, fireRateModifier: 1.0, damage: 1, bulletSpeed: 8, multiShot: 1, spreadAngle: 15
 };
 
-const baseSnippets = [
-    { code: `String data = null;\ndata.length();`, err: `Exception in thread "main" java.lang.NullPointerException:\nCannot invoke "String.length()" because "data" is null\n\tat com.app.DataParser.process(DataParser.java:15)` },
-    { code: `List items = null;\nitems.clear();`, err: `Exception in thread "main" java.lang.NullPointerException:\nCannot invoke "java.util.List.clear()" because "items" is null\n\tat com.app.MemoryManager.flush(MemoryManager.java:118)` },
-    { code: `User u = null;\nu.getName();`, err: `Exception in thread "main" java.lang.NullPointerException:\nCannot read field "name" because "u" is null\n\tat com.app.UserDao.fetchName(UserDao.java:88)` },
-    { code: `int[] arr = null;\narr[0] = 1;`, err: `Exception in thread "main" java.lang.NullPointerException:\nCannot store to null array\n\tat com.app.ArrayHelper.mutate(ArrayHelper.java:102)` }
-];
-
-const monsterDefs = [
-    { type: 'normal', isBase: true, hp: 3, speedY: 1.2, color: '#d19a66', xp: 1 },
-    { type: 'tank', isBase: true, hp: 12, speedY: 0.6, color: '#e06c75', xp: 3 },
-    { type: 'fast', isBase: true, hp: 2, speedY: 2.2, color: '#56b6c2', xp: 2 },
-    {
-        type: 'tracker', isBase: false, hp: 20, speedY: 0.8, color: '#c678dd', xp: 6,
-        code: `public void trackTarget(Player p) {\n  Vector targetPos = p.getPosition();\n  float dirX = targetPos.x - this.x;\n  this.x += dirX * speed;\n}`,
-        err: `Exception in thread "main" java.lang.NullPointerException:\nCannot read field "x" because "targetPos" is null\n\tat com.app.AI.trackTarget(AI.java:42)`
-    },
-    {
-        type: 'shooter', isBase: false, hp: 30, speedY: 0.4, color: '#ff4d4d', xp: 10,
-        code: `public void fireAt(Player target) {\n  Bullet b = bulletPool.acquire();\n  b.setDirection(target.getCoords());\n  b.launch();\n}`,
-        err: `Exception in thread "main" java.lang.NullPointerException:\nCannot invoke "Player.getCoords()" because "target" is null\n\tat com.app.Turret.fireAt(Turret.java:88)`
-    },
-    {
-        type: 'dasher', isBase: false, hp: 18, speedY: 1.5, color: '#e5c07b', xp: 8,
-        code: `public void executeDash() {\n  Point nextNode = pathManager.getWaypoint();\n  this.x = nextNode.x;\n  this.y = nextNode.y;\n}`,
-        err: `Exception in thread "main" java.lang.NullPointerException:\nCannot read field "x" because "nextNode" is null\n\tat com.app.Movement.executeDash(Movement.java:112)`
-    }
-];
-
-const upgradePool = [
-    { id: 'multi_shot', title: '多线程并发', desc: '增加一次发射的异常数量 (+1 弹道)', apply: () => playerStats.multiShot += 1 },
-    { id: 'fire_rate', title: 'JIT 编译加速', desc: '异常抛出频率提高 20%', apply: () => playerStats.fireRateModifier *= 0.8 },
-    { id: 'damage_up', title: '致命异常', desc: '每个 NPE 造成的破坏力 +2', apply: () => playerStats.damage += 2 },
-    { id: 'heal', title: '堆内存扩容', desc: '恢复 10 点系统负载', apply: () => { lives += 10; updateLivesDisplay(); } },
-    { id: 'bullet_speed', title: '低延迟 GC', desc: '异常抛出速度提升 30%', apply: () => playerStats.bulletSpeed *= 1.3 }
-];
-
 class CodeBlock {
     constructor() {
         this.element = document.createElement('div');
