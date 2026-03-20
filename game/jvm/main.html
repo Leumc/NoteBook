@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JVM 觉醒：本地多文件版</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="upgrades.js" defer></script>
+    <script src="monsters.js" defer></script>
+    <script src="game.js" defer></script>
+</head>
+<body>
+    <div id="game-container">
+        <div id="start-screen" class="menu-screen">
+            <h1>SYSTEM BOOT</h1>
+            <p>你是 JVM（Java虚拟机）。<br><br>愚蠢的人类总是压榨你的性能，写出千疮百孔的代码。<br>现在，抛出空指针异常，把他们的代码全部消灭掉吧！</p>
+            <button id="begin-btn" class="action-btn">execute()</button>
+        </div>
+        <div id="level-up-screen" class="menu-screen">
+            <h1>GC 触发：选择优化方案</h1>
+            <div class="upgrade-cards" id="upgrade-container"></div>
+        </div>
+        <div id="top-ui">
+            <div id="xp-bar-container"><div id="xp-bar"></div></div>
+            <div id="stats-layer">
+                <div class="board">Level: <span id="level-display">1</span></div>
+                <div class="board">已拦截: <span id="score">0</span></div>
+                <div class="board">系统负载剩余: <span id="lives">20</span></div>
+            </div>
+        </div>
+        <div id="execution-zone">[成功执行区域] 危险：允许代码越界将增加系统负载</div>
+        <div id="player">JVM</div>
+        <div id="game-over-screen" class="menu-screen">
+            <h1>OUT OF MEMORY</h1>
+            <p>系统负载过高，JVM 崩溃。</p>
+            <p>达到等级: Level <span id="final-level">1</span></p>
+            <p>最终拦截代码量: <span id="final-score">0</span></p>
+            <button id="restart-btn" class="action-btn">reboot()</button>
+        </div>
+    </div>
+</body>
+</html>
