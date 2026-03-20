@@ -55,7 +55,10 @@ body {
 
 #stats-layer {
     display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
     justify-content: space-between;
+    align-items: center;
     padding: 5px 10px;
     font-size: 12px;
 }
@@ -67,6 +70,23 @@ body {
     border-radius: 4px;
 }
 
+.board-btn {
+    background-color: rgba(97, 175, 239, 0.1);
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.board-btn:hover {
+    background-color: rgba(97, 175, 239, 0.3);
+    box-shadow: 0 0 8px rgba(97, 175, 239, 0.5);
+}
+
 #level-display {
     color: var(--xp-color);
     font-weight: bold;
@@ -74,6 +94,11 @@ body {
 
 #lives {
     color: var(--error-color);
+    font-weight: bold;
+}
+
+#shield-display {
+    color: var(--primary-color);
     font-weight: bold;
 }
 
@@ -175,6 +200,13 @@ body {
     height: 100%;
     background-color: var(--error-color);
     transition: width 0.1s;
+}
+
+.hp-text {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-color);
+    pointer-events: none;
 }
 
 .bullet {
@@ -314,7 +346,7 @@ body {
     gap: 15px;
     flex-wrap: wrap;
     justify-content: center;
-    max-width: 800px;
+    max-width: 1200px;
 }
 
 .upgrade-card {
@@ -347,6 +379,29 @@ body {
 .upgrade-desc {
     font-size: 12px;
     color: var(--text-color);
+}
+
+.advanced-card {
+    border: 2px solid #ffcc00 !important;
+    background: linear-gradient(135deg, rgba(42,32,0,0.8) 0%, #1a1e29 100%) !important;
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+}
+
+.advanced-card:hover {
+    box-shadow: 0 0 25px rgba(255, 204, 0, 0.8) !important;
+    transform: scale(1.05) !important;
+}
+
+.advanced-card .upgrade-title {
+    color: #ffcc00 !important;
+    text-shadow: 0 0 8px #ffcc00;
+}
+
+.upgrade-progress {
+    margin-top: 15px;
+    font-size: 14px;
+    color: var(--success-color);
+    letter-spacing: 2px;
 }
 
 .action-btn {
@@ -482,4 +537,34 @@ body {
     border-color: #56b6c2;
     background-color: rgba(0, 15, 20, 0.95);
     box-shadow: 0 4px 15px rgba(86, 182, 194, 0.4);
+}
+
+.lang-dropdown {
+    margin-bottom: 30px; 
+    padding: 10px 15px; 
+    font-size: 16px; 
+    background-color: #21252b; 
+    color: var(--primary-color); 
+    border: 2px solid var(--primary-color); 
+    border-radius: 4px;
+    font-family: var(--font-main);
+    cursor: pointer;
+    outline: none;
+}
+.lang-dropdown:focus {
+    box-shadow: 0 0 10px rgba(97, 175, 239, 0.5);
+}
+
+/* Cheat Menu Styles */
+.cheat-page {
+    display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; max-width: 800px; width: 100%;
+}
+.cheat-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; width: 100%;
+}
+.cheat-input-group {
+    display: flex; flex-direction: column; align-items: flex-start; color: #61afef; font-weight: bold; font-size: 14px;
+}
+.cheat-input-group input {
+    background: #21252b; color: #fff; border: 1px solid #61afef; padding: 8px; width: 100%; margin-top: 5px; border-radius: 4px; font-family: var(--font-main);
 }

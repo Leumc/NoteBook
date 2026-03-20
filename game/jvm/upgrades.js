@@ -1,15 +1,96 @@
+const advancedUpgradeTitles = {
+    crit: '绝对真理',
+    critDamage: '维度打击',
+    execute: 'SIGKILL (秒杀)',
+    maxLifeUp: '分布式冗余',
+    shieldMaxUp: '绝对沙箱',
+    dodgeRate: '薛定谔的代码',
+    lifeSteal: '内存吸血鬼',
+    slowAura: '绝对零度',
+    knockback: '引力斥力',
+    stunChance: '无限死锁',
+    bulletSize: '黑洞对象',
+    xpGainUp: '全知全能',
+    focusedFire: '同调射线'
+};
+
 function getUpgradePool(playerStats, healCallback) {
-    return [
-        { id: 'multi_shot', title: '多线程并发', desc: '增加一次发射的异常数量 (+1 弹道)', apply: () => playerStats.multiShot += 1 },
-        { id: 'fire_rate', title: 'JIT 编译加速', desc: '异常抛出频率提高 20%', apply: () => playerStats.fireRateModifier *= 0.8 },
-        { id: 'damage_up', title: '致命异常', desc: '每个 NPE 造成的破坏力 +2', apply: () => playerStats.damage += 2 },
-        { id: 'heal', title: 'GC 回收', desc: '恢复 15 点系统负载', apply: () => healCallback(15) },
-        { id: 'bullet_speed', title: '低延迟 GC', desc: '异常抛出速度提升 30%', apply: () => playerStats.bulletSpeed *= 1.3 },
-        // 【新增 1：穿透属性】
-        { id: 'pierce', title: '深层引用穿透', desc: '抛出的异常可额外穿透 1 个代码块', apply: () => playerStats.pierce += 1 },
-        // 【新增 2：暴击属性】
-        { id: 'crit', title: '反射暴击', desc: '15% 概率触发，造成 3 倍真实伤害', apply: () => playerStats.critRate += 0.15 }
+    // 动态获取当前选中语言的配置项
+    const opts = langConfig[currentLang].upgrades;
+    if (!playerStats.upgrades) playerStats.upgrades = {};
+    if (!playerStats.advanced) playerStats.advanced = {};
+
+    const track = (id) => { playerStats.upgrades[id] = (playerStats.upgrades[id] || 0) + 1; };
+    const trackAdv = (id) => { playerStats.advanced[id] = true; delete playerStats.upgrades[id]; };
+    
+    const basePool = [
+        // ============ 1. 核心火力体系 ============
+        { id: 'multiShot', title: opts.multiShot.title, desc: opts.multiShot.desc, apply: () => { playerStats.multiShot += 1; track('multiShot'); } },
+        { id: 'fireRate', title: opts.fireRate.title, desc: opts.fireRate.desc, apply: () => { playerStats.fireRateModifier *= 0.8; track('fireRate'); } },
+        { id: 'damageUp', title: opts.damageUp.title, desc: opts.damageUp.desc, apply: () => { playerStats.damage += 5; track('damageUp'); } },
+        { id: 'bulletSpeed', title: opts.bulletSpeed.title, desc: opts.bulletSpeed.desc, apply: () => { playerStats.bulletSpeed *= 1.3; track('bulletSpeed'); } },
+        { id: 'pierce', title: opts.pierce.title, desc: opts.pierce.desc, apply: () => { playerStats.pierce += 1; track('pierce'); } },
+
+        // ============ 2. 暴击爆发体系 ============
+        { id: 'crit', cap: 5, title: opts.crit.title, desc: opts.crit.desc, apply: () => { playerStats.critRate += 0.15; track('crit'); } },
+        { id: 'critDamage', cap: 5, title: opts.critDamage.title, desc: opts.critDamage.desc, apply: () => { playerStats.critDamageMult += 1.0; track('critDamage'); } },
+        { id: 'execute', cap: 3, title: opts.execute.title, desc: opts.execute.desc, apply: () => { playerStats.executeChance += 0.05; track('execute'); } },
+
+        // ============ 3. 生存防御体系 ============
+        { id: 'heal', title: opts.heal.title, desc: opts.heal.desc, apply: () => { healCallback(15); track('heal'); } },
+        { id: 'maxLifeUp', cap: 5, title: opts.maxLifeUp.title, desc: opts.maxLifeUp.desc, apply: () => { playerStats.maxLives += 20; healCallback(playerStats.maxLives); track('maxLifeUp'); } },
+        { id: 'shieldMaxUp', cap: 5, title: opts.shieldMaxUp.title, desc: opts.shieldMaxUp.desc, apply: () => { playerStats.maxShield += 10; playerStats.shield += 10; if (typeof updateShieldDisplay === 'function') updateShieldDisplay(); track('shieldMaxUp'); } },
+        { id: 'dodgeRate', cap: 5, title: opts.dodgeRate.title, desc: opts.dodgeRate.desc, apply: () => { playerStats.dodgeRate += 0.10; track('dodgeRate'); } },
+        { id: 'lifeSteal', cap: 5, title: opts.lifeSteal.title, desc: opts.lifeSteal.desc, apply: () => { playerStats.lifeStealRate += 0.05; track('lifeSteal'); } },
+
+        // ============ 4. 控制减速体系 ============
+        { id: 'slowAura', cap: 5, title: opts.slowAura.title, desc: opts.slowAura.desc, apply: () => { playerStats.globalSlow += 0.05; track('slowAura'); } },
+        { id: 'knockback', cap: 5, title: opts.knockback.title, desc: opts.knockback.desc, apply: () => { playerStats.knockbackDist += 10; track('knockback'); } },
+        { id: 'stunChance', cap: 5, title: opts.stunChance.title, desc: opts.stunChance.desc, apply: () => { playerStats.stunChance += 0.10; track('stunChance'); } },
+
+        // ============ 5. 范围与效能体系 ============
+        { id: 'bulletSize', cap: 3, title: opts.bulletSize.title, desc: opts.bulletSize.desc, apply: () => { playerStats.bulletSizeMult += 0.5; track('bulletSize'); } },
+        { id: 'xpGainUp', cap: 5, title: opts.xpGainUp.title, desc: opts.xpGainUp.desc, apply: () => { playerStats.xpMult += 0.2; track('xpGainUp'); } },
+        { id: 'focusedFire', cap: 4, title: opts.focusedFire.title, desc: opts.focusedFire.desc, apply: () => { playerStats.spreadAngle = Math.max(5, playerStats.spreadAngle * 0.8); track('focusedFire'); } }
     ];
+
+    const advDefs = {
+        crit: { title: advancedUpgradeTitles.crit, desc: '暴击率变为 100%，额外暴击倍率 +2.0x', apply: () => { playerStats.critRate -= 0.15 * 5; playerStats.critRate = 1.0; playerStats.critDamageMult += 2.0; trackAdv('crit'); } },
+        critDamage: { title: advancedUpgradeTitles.critDamage, desc: '暴击伤害倍率极大幅度提升 (+15.0x)', apply: () => { playerStats.critDamageMult -= 1.0 * 5; playerStats.critDamageMult += 15.0; trackAdv('critDamage'); } },
+        execute: { title: advancedUpgradeTitles.execute, desc: '秒杀概率升至 50%', apply: () => { playerStats.executeChance -= 0.05 * 3; playerStats.executeChance += 0.50; trackAdv('execute'); } },
+        maxLifeUp: { title: advancedUpgradeTitles.maxLifeUp, desc: '负载上限提升 500 点并瞬间回满', apply: () => { playerStats.maxLives -= 20 * 5; playerStats.maxLives += 500; healCallback(playerStats.maxLives); trackAdv('maxLifeUp'); } },
+        shieldMaxUp: { title: advancedUpgradeTitles.shieldMaxUp, desc: '护盾上限增加 300，并获得等量护盾', apply: () => { playerStats.maxShield -= 10 * 5; playerStats.maxShield += 300; playerStats.shield += 300; if (typeof updateShieldDisplay === 'function') updateShieldDisplay(); trackAdv('shieldMaxUp'); } },
+        dodgeRate: { title: advancedUpgradeTitles.dodgeRate, desc: '获得 80% 的绝对闪避概率', apply: () => { playerStats.dodgeRate -= 0.10 * 5; playerStats.dodgeRate += 0.80; trackAdv('dodgeRate'); } },
+        lifeSteal: { title: advancedUpgradeTitles.lifeSteal, desc: '吸血概率变为 50%，吸血量大幅增至 5', apply: () => { playerStats.lifeStealRate -= 0.05 * 5; playerStats.lifeStealRate += 0.50; playerStats.lifeStealAmount = 5; trackAdv('lifeSteal'); } },
+        slowAura: { title: advancedUpgradeTitles.slowAura, desc: '全局代码块移动速度极速降低 75%', apply: () => { playerStats.globalSlow -= 0.05 * 5; playerStats.globalSlow += 0.75; trackAdv('slowAura'); } },
+        knockback: { title: advancedUpgradeTitles.knockback, desc: '异常击中代码块时击退距离变为 150', apply: () => { playerStats.knockbackDist -= 10 * 5; playerStats.knockbackDist += 150; trackAdv('knockback'); } },
+        stunChance: { title: advancedUpgradeTitles.stunChance, desc: '死锁概率提升至 80%，时长延长至 3 秒', apply: () => { playerStats.stunChance -= 0.10 * 5; playerStats.stunChance += 0.80; playerStats.stunDuration = 180; trackAdv('stunChance'); } },
+        bulletSize: { title: advancedUpgradeTitles.bulletSize, desc: '抛出的异常体积超级巨大化，且伤害 +10', apply: () => { playerStats.bulletSizeMult -= 0.5 * 3; playerStats.bulletSizeMult += 4.0; playerStats.damage += 10; trackAdv('bulletSize'); } },
+        xpGainUp: { title: advancedUpgradeTitles.xpGainUp, desc: '经验获取倍率变为 500%', apply: () => { playerStats.xpMult -= 0.2 * 5; playerStats.xpMult += 4.0; trackAdv('xpGainUp'); } },
+        focusedFire: { title: advancedUpgradeTitles.focusedFire, desc: '多弹道不再散射，变为完全同向的收束攻击', apply: () => { playerStats.spreadAngle = 0; trackAdv('focusedFire'); } }
+    };
+
+    let finalPool = [];
+    for (let opt of basePool) {
+        if (opt.id === 'heal') { finalPool.push(opt); continue; }
+        
+        const count = playerStats.upgrades[opt.id] || 0;
+        if (opt.cap) {
+            if (count < opt.cap) {
+                finalPool.push(opt);
+            } else if (!playerStats.advanced[opt.id]) {
+                if (Math.random() < 0.3) {
+                    let adv = advDefs[opt.id];
+                    adv.id = opt.id;
+                    adv.isAdvanced = true;
+                    finalPool.push(adv);
+                }
+            }
+        } else {
+            finalPool.push(opt);
+        }
+    }
+    return finalPool;
 }
 
 function renderUpgrades(containerElement, options, onSelectCallback) {
@@ -17,7 +98,24 @@ function renderUpgrades(containerElement, options, onSelectCallback) {
     options.forEach(opt => {
         const card = document.createElement('div');
         card.className = 'upgrade-card';
-        card.innerHTML = `<div class="upgrade-title">${opt.title}</div><div class="upgrade-desc">${opt.desc}</div>`;
+        if (opt.isAdvanced) { card.classList.add('advanced-card'); }
+        
+        let progressHtml = '';
+        if (opt.isAdvanced) {
+            progressHtml = `<div class="upgrade-progress" style="color: #ffcc00; text-shadow: 0 0 5px #ffcc00;">[ 突破极限 ]</div>`;
+        } else if (opt.cap) {
+            const count = playerStats.upgrades[opt.id] || 0;
+            let dots = '';
+            for (let i = 0; i < opt.cap; i++) {
+                dots += i < count ? '■' : '□';
+            }
+            progressHtml = `<div class="upgrade-progress">${dots}</div>`;
+        } else {
+            const count = playerStats.upgrades[opt.id] || 0;
+            progressHtml = `<div class="upgrade-progress">已获取: ${count}</div>`;
+        }
+
+        card.innerHTML = `<div class="upgrade-title">${opt.isAdvanced ? '【进阶】' : ''}${opt.title}</div><div class="upgrade-desc">${opt.desc}</div>${progressHtml}`;
         card.onclick = () => {
             opt.apply();
             onSelectCallback(); 
