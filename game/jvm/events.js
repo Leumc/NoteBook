@@ -30,8 +30,13 @@ function tickEventSystem() {
     if (typeof updateEventTimerUI === 'function') updateEventTimerUI(eventTimeRemaining);
     if (eventTimeRemaining <= 0) {
         if (typeof activeBoss !== 'undefined' && activeBoss !== null) {
-            if (bossEventToggle) triggerEventD(); // 左侧狙击
-            else triggerEventC(); // 右侧狙击
+            if (bossEventToggle) {
+                if (typeof showAnnouncement === 'function') showAnnouncement('BOSS：左侧代码注入！');
+                triggerEventD(); // 左侧狙击
+            } else {
+                if (typeof showAnnouncement === 'function') showAnnouncement('BOSS：右侧代码注入！');
+                triggerEventC(); // 右侧狙击
+            }
             bossEventToggle = !bossEventToggle;
             eventTimeRemaining = 10000; // 恒定 10 秒
         } else {
@@ -51,6 +56,7 @@ function triggerRandomEvent() {
 
 // a:持续20秒内，持续不断地生成快速普通怪（每秒4次）
 function triggerEventA() {
+    if (typeof showAnnouncement === 'function') showAnnouncement('警告：高频快速请求爆发！');
     let count = 0;
     let intv = setInterval(() => {
         if (gameState !== 'PLAYING') {
@@ -65,6 +71,7 @@ function triggerEventA() {
 
 // b:直接一次性在页面中部生成一排不会动的厚血普通怪
 function triggerEventB() {
+    if (typeof showAnnouncement === 'function') showAnnouncement('警告：检测到大体积阻塞块！');
     const y = window.innerHeight / 2;
     let startX = 10;
     
@@ -90,6 +97,7 @@ function triggerEventB() {
 
 // c:在右侧从上到下依次生成侧向的发射子弹的怪
 function triggerEventC() {
+    if (typeof showAnnouncement === 'function') showAnnouncement('警告：右侧检测到侧信道攻击！');
     let count = 0;
     const maxCount = Math.floor((window.innerHeight - 100) / 60);
     let intv = setInterval(() => {
@@ -112,6 +120,7 @@ function triggerEventC() {
 
 // d:c事件在左侧的版本
 function triggerEventD() {
+    if (typeof showAnnouncement === 'function') showAnnouncement('警告：左侧检测到侧信道攻击！');
     let count = 0;
     const maxCount = Math.floor((window.innerHeight - 100) / 60);
     let intv = setInterval(() => {
@@ -134,6 +143,7 @@ function triggerEventD() {
 
 // e:在每个在场怪物的正下方生成一个厚血怪
 function triggerEventE() {
+    if (typeof showAnnouncement === 'function') showAnnouncement('警告：底层内存泄漏加剧！');
     const currentBlocks = codeBlocks.slice();
     currentBlocks.forEach(c => {
         let m = new CodeBlock(container, playerStats.level, 'tank');
@@ -146,7 +156,8 @@ function triggerEventE() {
 
 // f:跟b一样，不过这一次是生成spawner，生成位置在顶上
 function triggerEventF() {
-    const y = 50;
+    if (typeof showAnnouncement === 'function') showAnnouncement('警告：异常生成工厂降临！');
+    const y = 130;
     let startX = 10;
     
     let first = new CodeBlock(container, playerStats.level, 'spawner');

@@ -11,7 +11,9 @@ const advancedUpgradeTitles = {
     stunChance: '无限死锁',
     bulletSize: '黑洞对象',
     xpGainUp: '全知全能',
-    focusedFire: '同调射线'
+    focusedFire: '同调射线',
+    ammoCapUp: '海量吞吐',
+    reloadSpeedUp: '光速重载'
 };
 
 function getUpgradePool(playerStats, healCallback) {
@@ -25,19 +27,12 @@ function getUpgradePool(playerStats, healCallback) {
     
     const basePool = [
         // ============ 1. 核心火力体系 ============
-        { id: 'multiShot', title: opts.multiShot.title, desc: opts.multiShot.desc, apply: () => { playerStats.multiShot += 1; track('multiShot'); } },
-        { id: 'fireRate', title: opts.fireRate.title, desc: opts.fireRate.desc, apply: () => { playerStats.fireRateModifier *= 0.8; track('fireRate'); } },
-        { id: 'damageUp', title: opts.damageUp.title, desc: opts.damageUp.desc, apply: () => { playerStats.damage += 5; track('damageUp'); } },
-        { id: 'bulletSpeed', title: opts.bulletSpeed.title, desc: opts.bulletSpeed.desc, apply: () => { playerStats.bulletSpeed *= 1.3; track('bulletSpeed'); } },
-        { id: 'pierce', title: opts.pierce.title, desc: opts.pierce.desc, apply: () => { playerStats.pierce += 1; track('pierce'); } },
 
         // ============ 2. 暴击爆发体系 ============
         { id: 'crit', cap: 5, title: opts.crit.title, desc: opts.crit.desc, apply: () => { playerStats.critRate += 0.15; track('crit'); } },
         { id: 'critDamage', cap: 5, title: opts.critDamage.title, desc: opts.critDamage.desc, apply: () => { playerStats.critDamageMult += 1.0; track('critDamage'); } },
         { id: 'execute', cap: 3, title: opts.execute.title, desc: opts.execute.desc, apply: () => { playerStats.executeChance += 0.05; track('execute'); } },
 
-        // ============ 3. 生存防御体系 ============
-        { id: 'heal', title: opts.heal.title, desc: opts.heal.desc, apply: () => { healCallback(15); track('heal'); } },
         { id: 'maxLifeUp', cap: 5, title: opts.maxLifeUp.title, desc: opts.maxLifeUp.desc, apply: () => { playerStats.maxLives += 20; healCallback(playerStats.maxLives); track('maxLifeUp'); } },
         { id: 'shieldMaxUp', cap: 5, title: opts.shieldMaxUp.title, desc: opts.shieldMaxUp.desc, apply: () => { playerStats.maxShield += 10; playerStats.shield += 10; if (typeof updateShieldDisplay === 'function') updateShieldDisplay(); track('shieldMaxUp'); } },
         { id: 'dodgeRate', cap: 5, title: opts.dodgeRate.title, desc: opts.dodgeRate.desc, apply: () => { playerStats.dodgeRate += 0.10; track('dodgeRate'); } },
@@ -51,7 +46,11 @@ function getUpgradePool(playerStats, healCallback) {
         // ============ 5. 范围与效能体系 ============
         { id: 'bulletSize', cap: 3, title: opts.bulletSize.title, desc: opts.bulletSize.desc, apply: () => { playerStats.bulletSizeMult += 0.5; track('bulletSize'); } },
         { id: 'xpGainUp', cap: 5, title: opts.xpGainUp.title, desc: opts.xpGainUp.desc, apply: () => { playerStats.xpMult += 0.2; track('xpGainUp'); } },
-        { id: 'focusedFire', cap: 4, title: opts.focusedFire.title, desc: opts.focusedFire.desc, apply: () => { playerStats.spreadAngle = Math.max(5, playerStats.spreadAngle * 0.8); track('focusedFire'); } }
+        { id: 'focusedFire', cap: 4, title: opts.focusedFire.title, desc: opts.focusedFire.desc, apply: () => { playerStats.spreadAngle = Math.max(5, playerStats.spreadAngle * 0.8); track('focusedFire'); } },
+        
+        // ============ 6. 弹夹管理体系 ============
+        { id: 'ammoCapUp', cap: 5, title: opts.ammoCapUp.title, desc: opts.ammoCapUp.desc, apply: () => { playerStats.maxAmmo += 10; if(typeof updateAmmoDisplay==='function') updateAmmoDisplay(); track('ammoCapUp'); } },
+        { id: 'reloadSpeedUp', cap: 5, title: opts.reloadSpeedUp.title, desc: opts.reloadSpeedUp.desc, apply: () => { playerStats.reloadSpeedModifier *= 0.85; track('reloadSpeedUp'); } }
     ];
 
     const advDefs = {
@@ -67,13 +66,15 @@ function getUpgradePool(playerStats, healCallback) {
         stunChance: { title: advancedUpgradeTitles.stunChance, desc: '死锁概率提升至 80%，时长延长至 3 秒', apply: () => { playerStats.stunChance -= 0.10 * 5; playerStats.stunChance += 0.80; playerStats.stunDuration = 180; trackAdv('stunChance'); } },
         bulletSize: { title: advancedUpgradeTitles.bulletSize, desc: '抛出的异常体积超级巨大化，且伤害 +10', apply: () => { playerStats.bulletSizeMult -= 0.5 * 3; playerStats.bulletSizeMult += 4.0; playerStats.damage += 10; trackAdv('bulletSize'); } },
         xpGainUp: { title: advancedUpgradeTitles.xpGainUp, desc: '经验获取倍率变为 500%', apply: () => { playerStats.xpMult -= 0.2 * 5; playerStats.xpMult += 4.0; trackAdv('xpGainUp'); } },
-        focusedFire: { title: advancedUpgradeTitles.focusedFire, desc: '多弹道不再散射，变为完全同向的收束攻击', apply: () => { playerStats.spreadAngle = 0; trackAdv('focusedFire'); } }
+        focusedFire: { title: advancedUpgradeTitles.focusedFire, desc: '多弹道不再散射，变为完全同向的收束攻击', apply: () => { playerStats.spreadAngle = 0; trackAdv('focusedFire'); } },
+        ammoCapUp: { title: advancedUpgradeTitles.ammoCapUp, desc: '弹夹容量极大提升 (+100)', apply: () => { playerStats.maxAmmo -= 10 * 5; playerStats.maxAmmo += 100; if(typeof updateAmmoDisplay==='function') updateAmmoDisplay(); trackAdv('ammoCapUp'); } },
+        reloadSpeedUp: { title: advancedUpgradeTitles.reloadSpeedUp, desc: '换弹时间极度压缩 (-60%)', apply: () => { playerStats.reloadSpeedModifier /= Math.pow(0.85, 5); playerStats.reloadSpeedModifier *= 0.4; trackAdv('reloadSpeedUp'); } }
     };
 
     let finalPool = [];
     for (let opt of basePool) {
-        if (opt.id === 'heal') { finalPool.push(opt); continue; }
-        
+        if (playerStats.advanced[opt.id]) continue; // 屏蔽已获得进阶的升级
+
         const count = playerStats.upgrades[opt.id] || 0;
         if (opt.cap) {
             if (count < opt.cap) {

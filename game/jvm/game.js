@@ -83,7 +83,9 @@ const langConfig = {
             stunChance: { title: '死锁触发', desc: '10% 概率使击中的代码块卡死 1 秒' },
             bulletSize: { title: '大对象分配', desc: '抛出的异常体积增加 50%' },
             xpGainUp: { title: 'Profiler 分析', desc: '获得的经验值增加 20%' },
-            focusedFire: { title: '同步锁', desc: '缩小多弹道散射角度 20%' }
+            focusedFire: { title: '同步锁', desc: '缩小多弹道散射角度 20%' },
+            ammoCapUp: { title: '增大缓冲池', desc: '弹夹容量 +10' },
+            reloadSpeedUp: { title: '类加载加速', desc: '换弹时间减少 15%' }
         }
     },
     python: {
@@ -116,7 +118,9 @@ const langConfig = {
             stunChance: { title: 'time.sleep()', desc: '10% 概率使击中的代码块卡死 1 秒' },
             bulletSize: { title: '胖指针对象', desc: '抛出的异常体积增加 50%' },
             xpGainUp: { title: 'cProfile 剖析', desc: '获得的经验值增加 20%' },
-            focusedFire: { title: '闭包绑定', desc: '缩小多弹道散射角度 20%' }
+            focusedFire: { title: '闭包绑定', desc: '缩小多弹道散射角度 20%' },
+            ammoCapUp: { title: '增加生成器容量', desc: '弹夹容量 +10' },
+            reloadSpeedUp: { title: '热重载加速', desc: '换弹时间减少 15%' }
         }
     },
     cpp: {
@@ -149,7 +153,9 @@ const langConfig = {
             stunChance: { title: '互斥锁死锁', desc: '10% 概率使击中的代码块卡死 1 秒' },
             bulletSize: { title: '超大结构体', desc: '抛出的异常体积增加 50%' },
             xpGainUp: { title: 'Valgrind 分析', desc: '获得的经验值增加 20%' },
-            focusedFire: { title: '指针别名限制', desc: '缩小多弹道散射角度 20%' }
+            focusedFire: { title: '指针别名限制', desc: '缩小多弹道散射角度 20%' },
+            ammoCapUp: { title: '对象池扩容', desc: '弹夹容量 +10' },
+            reloadSpeedUp: { title: '内存预分配', desc: '换弹时间减少 15%' }
         }
     }
 };
@@ -157,7 +163,7 @@ const langConfig = {
 let currentLang = 'java';
 
 let gameState = 'START';
-let score = 0; let lives = 100;
+let score = 0; let lives = 10000;
 let codeBlocks = []; let bullets = []; let enemyBullets = [];
 let blockSpawnInterval;
 let autoRegenInterval;
@@ -175,6 +181,8 @@ let playerY = window.innerHeight - 80;
 
 let isPointerDown = false; let fireCooldownTimer = 0;
 let stopTheWorldTimer = 0;
+let currentAmmo = 30; let isReloading = false; let reloadTimer = 0;
+let maxReloadTimer = 0; let announcementTimeout = null;
 
 const playerStats = {
     level: 1, xp: 0, xpNeeded: 20,
@@ -183,7 +191,8 @@ const playerStats = {
     critDamageMult: 3.0, dodgeRate: 0.0, lifeStealRate: 0.0, lifeStealAmount: 1,
     globalSlow: 0.0, knockbackDist: 0, stunChance: 0.0, stunDuration: 60,
     bulletSizeMult: 1.0, xpMult: 1.0, executeChance: 0.0,
-    maxLives: 100, maxShield: 0, shield: 0,
+    maxLives: 10000, maxShield: 0, shield: 0,
+    maxAmmo: 30, reloadSpeedModifier: 1.0,
     upgrades: {}, advanced: {}
 };
 
@@ -197,7 +206,8 @@ function updateLanguageUI() {
     document.getElementById('game-over-title').textContent = conf.gameOverTitle;
     document.getElementById('game-over-desc').textContent = conf.gameOverDesc;
     document.getElementById('level-up-title').textContent = conf.levelUpTitle;
-    playerElement.textContent = conf.player;
+    const pName = document.getElementById('player-name');
+    if (pName) pName.textContent = conf.player;
 }
 
 langSelector.addEventListener('change', (e) => {
@@ -236,7 +246,7 @@ class Bullet {
     update() {
         this.x += this.speedX; this.y -= this.speedY;
         this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0) rotate(${this.angleDeg}deg)`;
-        if (this.y < -this.height || this.x < 0 || this.x > window.innerWidth) { this.remove(); return false; }
+        if (this.y < 120 || this.x < 0 || this.x > window.innerWidth) { this.remove(); return false; }
         return true;
     }
     remove() { 
@@ -343,6 +353,34 @@ function updateShieldDisplay() {
     if (sd) sd.textContent = `${playerStats.shield}/${playerStats.maxShield}`;
 }
 
+function updateAmmoDisplay() {
+    const ammoEl = document.getElementById('ammo-display');
+    const playerAmmoText = document.getElementById('player-ammo-text');
+    const playerReloadBg = document.getElementById('player-reload-bar-bg');
+    
+    if (isReloading) {
+        if (ammoEl) { ammoEl.textContent = 'RELOADING...'; ammoEl.style.color = 'var(--warning-color)'; }
+        if (playerAmmoText) { playerAmmoText.textContent = 'RELOADING'; playerAmmoText.style.color = 'var(--warning-color)'; }
+        if (playerReloadBg) playerReloadBg.style.display = 'block';
+    } else {
+        let color = currentAmmo <= playerStats.maxAmmo * 0.25 ? 'var(--error-color)' : 'var(--primary-color)';
+        if (ammoEl) { ammoEl.textContent = `${currentAmmo}/${playerStats.maxAmmo}`; ammoEl.style.color = color; }
+        if (playerAmmoText) { playerAmmoText.textContent = `${currentAmmo}/${playerStats.maxAmmo}`; playerAmmoText.style.color = color; }
+        if (playerReloadBg) playerReloadBg.style.display = 'none';
+    }
+}
+
+function showAnnouncement(text) {
+    const banner = document.getElementById('announcement-banner');
+    if (!banner) return;
+    banner.innerHTML = text;
+    banner.classList.add('announcement-show');
+    clearTimeout(announcementTimeout);
+    announcementTimeout = setTimeout(() => {
+        banner.classList.remove('announcement-show');
+    }, 3000);
+}
+
 function takePlayerDamage(amount, bypassShield = false) {
     if (Math.random() < playerStats.dodgeRate) {
         showDamageText(playerX, playerY - 20, "Dodged!", 'crit');
@@ -397,24 +435,265 @@ function gainXp(amount) {
     xpBar.style.width = `${(playerStats.xp / playerStats.xpNeeded) * 100}%`;
 }
 
+let pendingFp = 0;
+let pendingAlloc = {};
+let selectedUpgOpt = null;
+let currentRefreshCost = 5;
+let currentHealCost = 10;
+
+const fpCosts = {
+    multiShot: 10,
+    fireRate: 5,
+    damageUp: 3,
+    bulletSpeed: 2,
+    pierce: 8
+};
+
 function triggerLevelUp() {
     playSound('level_up');
     gameState = 'PAUSED';
+    
+    playerStats.firepowerPoints = (playerStats.firepowerPoints || 0) + 3;
+    pendingFp = playerStats.firepowerPoints;
+    pendingAlloc = { multiShot: 0, fireRate: 0, damageUp: 0, bulletSpeed: 0, pierce: 0 };
+    selectedUpgOpt = null;
+    currentRefreshCost = 5;
+    currentHealCost = 10;
+
     const pool = getUpgradePool(playerStats, healPlayer);
     const shuffled = [...pool].sort(() => 0.5 - Math.random());
-    const options = shuffled.slice(0, 5);
+    const options = shuffled.slice(0, 4);
 
-    renderUpgrades(upgradeContainer, options, () => {
+    renderLevelUpUI(options);
+    levelUpScreen.style.display = 'flex';
+}
+
+function renderLevelUpUI(options) {
+    const confirmBtn = document.getElementById('confirm-upg-btn');
+    confirmBtn.disabled = false;
+    confirmBtn.style.opacity = '1';
+    
+    confirmBtn.onclick = () => {
+        if (!selectedUpgOpt) {
+            playerStats.firepowerPoints = pendingFp + 3;
+        } else {
+            playerStats.firepowerPoints = pendingFp;
+        }
+        
+        for (let k in pendingAlloc) {
+            for (let i = 0; i < pendingAlloc[k]; i++) {
+                if (k === 'multiShot') playerStats.multiShot += 1;
+                if (k === 'fireRate') playerStats.fireRateModifier *= 0.8;
+                if (k === 'damageUp') playerStats.damage += 5;
+                if (k === 'bulletSpeed') playerStats.bulletSpeed *= 1.3;
+                if (k === 'pierce') playerStats.pierce += 1;
+                playerStats.upgrades[k] = (playerStats.upgrades[k] || 0) + 1;
+            }
+        }
+        
+        if (selectedUpgOpt) {
+            selectedUpgOpt.apply();
+        }
+        
         levelUpScreen.style.display = 'none';
         gameState = 'PLAYING';
         isPointerDown = false;
         lastFrameTime = performance.now(); // 防止恢复游戏后由于 dt 突增引发异常计算
         requestAnimationFrame(gameLoop);
+    };
+
+    const btnRefresh = document.getElementById('btn-refresh');
+    btnRefresh.onclick = () => {
+        const cost = Math.floor(currentRefreshCost);
+        if (pendingFp >= cost) {
+            pendingFp -= cost;
+            currentRefreshCost = Math.floor(currentRefreshCost * 1.5);
+            const pool = getUpgradePool(playerStats, healPlayer);
+            const shuffled = [...pool].sort(() => 0.5 - Math.random());
+            renderUpgCards(shuffled.slice(0, 4));
+            updateFpPanel();
+        }
+    };
+
+    const btnHeal = document.getElementById('btn-heal');
+    btnHeal.onclick = () => {
+        const cost = Math.floor(currentHealCost);
+        if (pendingFp >= cost) {
+            if (lives >= playerStats.maxLives) {
+                btnHeal.textContent = "负载已满！";
+                setTimeout(() => { 
+                    if (btnHeal) {
+                        btnHeal.textContent = `回复负载 (消耗: ${Math.floor(currentHealCost)})`;
+                        updateFpPanel();
+                    }
+                }, 1000);
+                return;
+            }
+            pendingFp -= cost;
+            currentHealCost = Math.floor(currentHealCost * 1.5);
+            healPlayer(500);
+            updateFpPanel();
+        }
+    };
+
+    renderUpgCards(options);
+    updateFpPanel();
+}
+
+function renderUpgCards(options) {
+    const confirmBtn = document.getElementById('confirm-upg-btn');
+    upgradeContainer.innerHTML = '';
+    selectedUpgOpt = null;
+    updateConfirmBtnText();
+    
+    options.forEach(opt => {
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        if (opt.isAdvanced) { card.classList.add('advanced-card'); }
+        
+        let progressHtml = '';
+        if (opt.isAdvanced) {
+            progressHtml = `<div class="upgrade-progress" style="color: #ffcc00; text-shadow: 0 0 5px #ffcc00;">[ 突破极限 ]</div>`;
+        } else if (opt.cap) {
+            const count = playerStats.upgrades[opt.id] || 0;
+            let dots = '';
+            for (let i = 0; i < opt.cap; i++) {
+                dots += i < count ? '■' : '□';
+            }
+            progressHtml = `<div class="upgrade-progress">${dots}</div>`;
+        } else {
+            const count = playerStats.upgrades[opt.id] || 0;
+            progressHtml = `<div class="upgrade-progress">已获取: ${count}</div>`;
+        }
+
+        card.innerHTML = `<div class="upgrade-title">${opt.isAdvanced ? '【进阶】' : ''}${opt.title}</div><div class="upgrade-desc">${opt.desc}</div>${progressHtml}`;
+        card.onclick = () => {
+            document.querySelectorAll('.upgrade-card').forEach(c => c.classList.remove('selected-card'));
+            card.classList.add('selected-card');
+            selectedUpgOpt = opt;
+            updateConfirmBtnText();
+        };
+        upgradeContainer.appendChild(card);
     });
-    levelUpScreen.style.display = 'flex';
+}
+
+function updateConfirmBtnText() {
+    const confirmBtn = document.getElementById('confirm-upg-btn');
+    if (!selectedUpgOpt) {
+        confirmBtn.textContent = '跳过升级 (+3 点数) / 确认';
+    } else {
+        confirmBtn.textContent = '确认 (Confirm)';
+    }
+}
+
+function getStatCap(stat, level) {
+    let interval = 20;
+    if (stat === 'multiShot') interval = 20;
+    else if (stat === 'damageUp') interval = 10;
+    else if (stat === 'pierce') interval = 15;
+    else if (stat === 'bulletSpeed') interval = 8;
+    else if (stat === 'fireRate') interval = 12;
+    
+    let cap = 3 + Math.floor(level / interval);
+    let nextLevel = (Math.floor(level / interval) + 1) * interval;
+    return { cap, nextLevel };
+}
+
+function updateFpPanel() {
+    let currentTotalCoreLevel = 0;
+    const stats = ['multiShot', 'fireRate', 'damageUp', 'bulletSpeed', 'pierce'];
+    stats.forEach(k => {
+        currentTotalCoreLevel += (playerStats.upgrades[k] || 0) + pendingAlloc[k];
+    });
+    const maxCapacity = playerStats.level;
+    
+    document.getElementById('fp-available').textContent = pendingFp;
+    const capEl = document.getElementById('fp-capacity');
+    if (capEl) capEl.textContent = `${currentTotalCoreLevel}/${maxCapacity}`;
+    
+    const list = document.getElementById('fp-stats-list');
+    list.innerHTML = '';
+    
+    const opts = langConfig[currentLang].upgrades;
+    
+    stats.forEach(k => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.alignItems = 'center';
+        row.style.marginBottom = '10px';
+        row.style.paddingBottom = '10px';
+        row.style.borderBottom = '1px dashed rgba(255, 255, 255, 0.1)';
+        row.style.fontSize = '14px';
+        
+        const title = opts[k] ? opts[k].title : k;
+        const desc = opts[k] ? opts[k].desc : '';
+        const cost = fpCosts[k];
+        const currentLvl = (playerStats.upgrades[k] || 0) + pendingAlloc[k];
+        const { cap, nextLevel } = getStatCap(k, playerStats.level);
+        
+        const canAfford = pendingFp >= cost && currentLvl < cap && currentTotalCoreLevel < maxCapacity;
+        const canRefund = pendingAlloc[k] > 0;
+        
+        row.innerHTML = `
+            <div style="flex: 2; display: flex; flex-direction: column;">
+                <div style="color: var(--primary-color); font-weight: bold;">${title} <span style="color: var(--text-color); font-weight: normal;">(${currentLvl}/${cap})</span></div>
+                <div style="color: var(--text-color); font-size: 11px; margin-top: 4px;">${desc} <span style="color: var(--warning-color); margin-left: 5px;">(Lv.${nextLevel} 上限提升)</span></div>
+            </div>
+            <div style="flex: 1; text-align: center; color: var(--warning-color);">消耗: ${cost}</div>
+            <div style="flex: 1; display: flex; justify-content: flex-end; gap: 5px;">
+                <button class="fp-btn" ${!canRefund ? 'disabled style="opacity:0.3"' : ''}>-</button>
+                <button class="fp-btn" ${!canAfford ? 'disabled style="opacity:0.3"' : ''}>+</button>
+            </div>
+        `;
+        
+        const btns = row.querySelectorAll('button');
+        btns[0].onclick = () => {
+            if (canRefund) {
+                pendingAlloc[k]--;
+                pendingFp += cost;
+                updateFpPanel();
+            }
+        };
+        btns[1].onclick = () => {
+            if (canAfford) {
+                pendingAlloc[k]++;
+                pendingFp -= cost;
+                updateFpPanel();
+            }
+        };
+        
+        list.appendChild(row);
+    });
+
+    const btnRefresh = document.getElementById('btn-refresh');
+    const btnHeal = document.getElementById('btn-heal');
+    
+    const rc = Math.floor(currentRefreshCost);
+    btnRefresh.textContent = `刷新升级 (消耗: ${rc})`;
+    if (pendingFp >= rc) {
+        btnRefresh.disabled = false;
+        btnRefresh.style.opacity = '1';
+    } else {
+        btnRefresh.disabled = true;
+        btnRefresh.style.opacity = '0.3';
+    }
+    
+    const hc = Math.floor(currentHealCost);
+    if (btnHeal.textContent !== "负载已满！") {
+        btnHeal.textContent = `回复负载 (消耗: ${hc})`;
+    }
+    if (pendingFp >= hc) {
+        btnHeal.disabled = false;
+        btnHeal.style.opacity = '1';
+    } else {
+        btnHeal.disabled = true;
+        btnHeal.style.opacity = '0.3';
+    }
 }
 
 function fireBullets() {
+    if (isReloading || currentAmmo <= 0) return;
     playSound('bullet');
     const count = playerStats.multiShot;
     if (count === 1) { bullets.push(new Bullet(playerX, playerY, 0)); }
@@ -426,6 +705,14 @@ function fireBullets() {
             bullets.push(new Bullet(playerX, playerY, angle));
         }
     }
+
+    currentAmmo--;
+    if (currentAmmo <= 0) {
+        isReloading = true;
+        maxReloadTimer = Math.max(30, 120 * playerStats.reloadSpeedModifier);
+        reloadTimer = maxReloadTimer;
+    }
+    updateAmmoDisplay();
 }
 
 function spawnEnemyBullet(x, y, targetX, targetY, textOverride = null) {
@@ -526,8 +813,21 @@ function gameLoop(timestamp) {
         }
     }
 
-    if (isPointerDown && fireCooldownTimer <= 0) {
-        fireBullets(); fireCooldownTimer = playerStats.baseFireRateLimit * playerStats.fireRateModifier;
+    if (isReloading) {
+        reloadTimer -= 1;
+        const bar = document.getElementById('player-reload-bar');
+        if (bar && maxReloadTimer > 0) {
+            bar.style.width = `${((maxReloadTimer - reloadTimer) / maxReloadTimer) * 100}%`;
+        }
+        if (reloadTimer <= 0) {
+            isReloading = false;
+            currentAmmo = playerStats.maxAmmo;
+            updateAmmoDisplay();
+        }
+    } else {
+        if (isPointerDown && fireCooldownTimer <= 0) {
+            fireBullets(); fireCooldownTimer = playerStats.baseFireRateLimit * playerStats.fireRateModifier;
+        }
     }
     if (fireCooldownTimer > 0) fireCooldownTimer--;
 
@@ -573,9 +873,15 @@ function startGame() {
     playerStats.critDamageMult = 3.0; playerStats.dodgeRate = 0.0; playerStats.lifeStealRate = 0.0; playerStats.lifeStealAmount = 1;
     playerStats.globalSlow = 0.0; playerStats.knockbackDist = 0; playerStats.stunChance = 0.0; playerStats.stunDuration = 60;
     playerStats.bulletSizeMult = 1.0; playerStats.xpMult = 1.0; playerStats.executeChance = 0.0;
-    playerStats.maxLives = 100; playerStats.maxShield = 0; playerStats.shield = 0;
+    playerStats.maxLives = 10000; playerStats.maxShield = 0; playerStats.shield = 0;
+    playerStats.maxAmmo = 30; playerStats.reloadSpeedModifier = 1.0;
     playerStats.upgrades = {}; playerStats.advanced = {};
-    lives = 100;
+    playerStats.firepowerPoints = 0;
+    lives = 10000;
+    currentAmmo = 30; isReloading = false; reloadTimer = 0; maxReloadTimer = 0;
+    
+    const banner = document.getElementById('announcement-banner');
+    if (banner) banner.classList.remove('announcement-show');
 
     scoreElement.textContent = score; updateLivesDisplay(); updateShieldDisplay(); levelDisplay.textContent = playerStats.level;
     xpBar.style.width = '0%';
@@ -584,6 +890,7 @@ function startGame() {
     langSelector.style.display = 'none'; // 游戏开始隐藏选择器
     startScreen.style.display = 'none'; gameOverScreen.style.display = 'none';
     topUi.style.display = 'flex'; executionZone.style.display = 'flex'; playerElement.style.display = 'flex';
+    document.getElementById('top-exclusion-zone').style.display = 'flex';
 
     codeBlocks.forEach(b => b.remove()); bullets.forEach(b => b.remove()); enemyBullets.forEach(b => b.remove());
     document.querySelectorAll('.error-explosion, .buff-explosion, .damage-text').forEach(e => e.remove());
@@ -591,6 +898,7 @@ function startGame() {
     codeBlocks = []; bullets = []; enemyBullets = []; isPointerDown = false;
 
     handlePlayerMove(window.innerWidth / 2, window.innerHeight - 80);
+    updateAmmoDisplay();
 
     gameState = 'PLAYING';
     if (blockSpawnInterval) clearInterval(blockSpawnInterval);
@@ -668,6 +976,7 @@ function returnToMenu() {
     bgm.pause();
     bgm.currentTime = 0;
     gameState = 'START';
+    document.getElementById('top-exclusion-zone').style.display = 'none';
     pauseScreen.style.display = 'none'; gameOverScreen.style.display = 'none';
     topUi.style.display = 'none'; executionZone.style.display = 'none'; playerElement.style.display = 'none';
     langSelector.style.display = 'block'; startScreen.style.display = 'flex';
@@ -683,6 +992,7 @@ function endGame() {
     bgm.currentTime = 0;
     gameState = 'GAMEOVER';
     document.getElementById('final-score').textContent = score; document.getElementById('final-level').textContent = playerStats.level;
+    document.getElementById('top-exclusion-zone').style.display = 'none';
     topUi.style.display = 'none'; executionZone.style.display = 'none'; playerElement.style.display = 'none';
     langSelector.style.display = 'block'; // 游戏结束恢复选择器
     gameOverScreen.style.display = 'flex';
@@ -744,7 +1054,7 @@ function applyCheatStats() {
     playerStats.level = parseInt(document.getElementById('cs-level').value) || 1;
     levelDisplay.textContent = playerStats.level;
     playerStats.damage = parseInt(document.getElementById('cs-damage').value) || 1;
-    playerStats.maxLives = parseInt(document.getElementById('cs-maxlives').value) || 100;
+    playerStats.maxLives = parseInt(document.getElementById('cs-maxlives').value) || 10000;
     playerStats.maxShield = parseInt(document.getElementById('cs-maxshield').value) || 0;
     playerStats.critRate = parseFloat(document.getElementById('cs-crit').value) || 0;
     playerStats.bulletSpeed = parseInt(document.getElementById('cs-spd').value) || 8;
@@ -781,7 +1091,7 @@ function initCheatUpgrades() {
     });
 
     // 添加进阶升级按钮
-    const advKeys = ['crit', 'critDamage', 'execute', 'maxLifeUp', 'shieldMaxUp', 'dodgeRate', 'lifeSteal', 'slowAura', 'knockback', 'stunChance', 'bulletSize', 'xpGainUp', 'focusedFire'];
+    const advKeys = ['crit', 'critDamage', 'execute', 'maxLifeUp', 'shieldMaxUp', 'dodgeRate', 'lifeSteal', 'slowAura', 'knockback', 'stunChance', 'bulletSize', 'xpGainUp', 'focusedFire', 'ammoCapUp', 'reloadSpeedUp'];
     advKeys.forEach(k => {
         let b = document.createElement('button');
         b.className = 'action-btn';
@@ -817,6 +1127,8 @@ function cheatGrantUpgrade(id) {
         case 'bulletSize': playerStats.bulletSizeMult += 0.5; break;
         case 'xpGainUp': playerStats.xpMult += 0.2; break;
         case 'focusedFire': playerStats.spreadAngle = Math.max(5, playerStats.spreadAngle * 0.8); break;
+        case 'ammoCapUp': playerStats.maxAmmo += 10; updateAmmoDisplay(); break;
+        case 'reloadSpeedUp': playerStats.reloadSpeedModifier *= 0.85; break;
     }
     createPopupInfo(playerX, playerY, '+ Upgrade Acquired', 'buff-explosion');
 }
@@ -840,6 +1152,8 @@ function cheatGrantAdvUpgrade(id) {
         case 'bulletSize': playerStats.bulletSizeMult += 4.0; playerStats.damage += 10; break;
         case 'xpGainUp': playerStats.xpMult += 4.0; break;
         case 'focusedFire': playerStats.spreadAngle = 0; break;
+        case 'ammoCapUp': playerStats.maxAmmo += 100; updateAmmoDisplay(); break;
+        case 'reloadSpeedUp': playerStats.reloadSpeedModifier *= 0.4; break;
     }
     createPopupInfo(playerX, playerY, '+ Adv Upgrade Acquired', 'buff-explosion');
 }
