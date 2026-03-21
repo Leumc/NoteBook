@@ -9,10 +9,13 @@
     <script src="upgrades.js" defer></script>
     <script src="monsters.js" defer></script>
         <script src="boss/boss1.js" defer></script>
+    <script src="devtools.js" defer></script>
+    <script src="manual.js" defer></script>
     <script src="game.js" defer></script>
 </head>
 <body>
     <div id="game-container">
+        <canvas id="bg-canvas"></canvas>
         <div id="start-screen" class="menu-screen">
             <h1 id="start-title">SYSTEM BOOT</h1>
             <p id="start-desc">初始化中...</p>
@@ -24,11 +27,12 @@
             </select>
 
             <button id="begin-btn" class="action-btn">execute()</button>
+            <button id="btn-manual-main" class="action-btn" style="margin-top: 15px; font-size: 14px; padding: 8px 20px;">游戏说明 (Manual)</button>
         </div>
         <div id="level-up-screen" class="menu-screen">
             <h1 id="level-up-title">优化方案选择</h1>
             <div id="fp-allocation-panel" style="margin-bottom: 20px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid var(--jvm-color); text-align: left; min-width: 400px; max-width: 500px; width: 100%;">
-                <h3 style="color: var(--jvm-color); margin-top: 0; text-align: center;">火力分配 (剩余: <span id="fp-available">0</span>) | 总容量: <span id="fp-capacity">0/1</span></h3>
+                <h3 style="color: var(--jvm-color); margin-top: 0; text-align: center;">火力分配 (剩余: <span id="fp-available">0</span>)</h3>
                 <div id="fp-stats-list"></div>
                 <div id="fp-actions" style="display: flex; gap: 10px; margin-top: 15px; justify-content: center; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1);">
                     <button id="btn-refresh" class="action-btn" style="font-size: 14px; padding: 6px 12px;">刷新升级 (消耗: 5)</button>
@@ -47,6 +51,7 @@
                 <div class="board">护盾: <span id="shield-display">0/0</span></div>
                 <div class="board">Ammo: <span id="ammo-display">30/30</span></div>
                 <div class="board">下一次事件: <span id="event-timer">20.0</span>s</div>
+                <div class="board">Boss降临: <span id="boss-timer">03:00</span></div>
                 <button id="pause-btn" class="board-btn">暂停 (ESC)</button>
             </div>
         </div>
@@ -74,6 +79,7 @@
                 <button id="resume-btn" class="action-btn">继续 (Continue)</button>
                 <button id="retry-btn" class="action-btn">重试 (Retry)</button>
                 <button id="menu-btn" class="action-btn">主界面 (Main)</button>
+                <button id="btn-manual-pause" class="action-btn" style="border-color: var(--warning-color); color: var(--warning-color);">说明 (Manual)</button>
             </div>
         </div>
         <div id="cheat-menu" class="menu-screen" style="display: none; background: rgba(0,0,0,0.95); z-index: 2000;">
@@ -89,36 +95,18 @@
             </div>
 
             <div id="cheat-boss-menu" class="cheat-page" style="display:none;">
-                <button class="action-btn" onclick="if(!activeBoss) { boss1Spawned = true; spawnBoss1(); document.getElementById('cheat-menu').style.display='none'; }">Boss 1</button>
+                <button class="action-btn" onclick="if(!activeBoss) { boss1Spawned = true; spawnBoss1(); document.getElementById('cheat-menu').style.display='none'; }">Boss OOM-Reaper</button>
                 <button class="action-btn" onclick="showCheatPage('cheat-main-menu')">Back</button>
             </div>
 
             <div id="cheat-mob-menu" class="cheat-page" style="display:none; max-width: 800px;">
                 <div class="cheat-grid">
-                    <button class="action-btn" onclick="spawnDevMob(0)">Normal</button>
-                    <button class="action-btn" onclick="spawnDevMob(1)">Tank</button>
-                    <button class="action-btn" onclick="spawnDevMob(2)">Fast</button>
-                    <button class="action-btn" onclick="spawnDevMob(3)">Tracker</button>
-                    <button class="action-btn" onclick="spawnDevMob(4)">Shooter</button>
-                    <button class="action-btn" onclick="spawnDevMob(5)">Dasher</button>
-                    <button class="action-btn" onclick="spawnDevMob(6)">Spawner</button>
-                    <button class="action-btn" onclick="spawnDevMob(7)">Wobbler</button>
-                    <button class="action-btn" onclick="spawnDevMob(8)">Side Basic</button>
-                    <button class="action-btn" onclick="spawnDevMob(9)">Side Sniper</button>
-                    <button class="action-btn" onclick="spawnDevMob(10)">GC Heal</button>
-                    <button class="action-btn" onclick="spawnDevMob(11)">GC Slow</button>
                 </div>
                 <button class="action-btn" style="margin-top: 15px;" onclick="showCheatPage('cheat-main-menu')">Back</button>
             </div>
 
             <div id="cheat-event-menu" class="cheat-page" style="display:none;">
                 <div class="cheat-grid">
-                    <button class="action-btn" onclick="triggerEventA(); document.getElementById('cheat-menu').style.display='none'">Event A (Fast Rush)</button>
-                    <button class="action-btn" onclick="triggerEventB(); document.getElementById('cheat-menu').style.display='none'">Event B (Tank Wall)</button>
-                    <button class="action-btn" onclick="triggerEventC(); document.getElementById('cheat-menu').style.display='none'">Event C (Right Sniper)</button>
-                    <button class="action-btn" onclick="triggerEventD(); document.getElementById('cheat-menu').style.display='none'">Event D (Left Sniper)</button>
-                    <button class="action-btn" onclick="triggerEventE(); document.getElementById('cheat-menu').style.display='none'">Event E (Tanks Fall)</button>
-                    <button class="action-btn" onclick="triggerEventF(); document.getElementById('cheat-menu').style.display='none'">Event F (Spawners)</button>
                 </div>
                 <button class="action-btn" style="margin-top: 15px;" onclick="showCheatPage('cheat-main-menu')">Back</button>
             </div>

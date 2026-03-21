@@ -23,7 +23,8 @@ function tickEventSystem() {
     
     // 如果进入 Boss 战，事件间隔被固定覆盖为 10 秒
     if (typeof activeBoss !== 'undefined' && activeBoss !== null) {
-        if (eventTimeRemaining > 10000) eventTimeRemaining = 10000;
+        let limit = window.bossPhase2 ? 3000 : 10000;
+        if (eventTimeRemaining > limit) eventTimeRemaining = limit;
     }
     
     eventTimeRemaining -= 100;
@@ -38,10 +39,10 @@ function tickEventSystem() {
                 triggerEventC(); // 右侧狙击
             }
             bossEventToggle = !bossEventToggle;
-            eventTimeRemaining = 10000; // 恒定 10 秒
+            eventTimeRemaining = window.bossPhase2 ? 3000 : 10000;
         } else {
             triggerRandomEvent();
-            currentEventInterval = Math.max(10000, currentEventInterval * 0.9);
+            currentEventInterval = Math.max(12000, currentEventInterval * 0.95);
             eventTimeRemaining = currentEventInterval;
         }
     }
@@ -94,6 +95,16 @@ function triggerEventB() {
         startX += w;
     }
 }
+
+// 导出事件供开发者工具调用
+const gameEventsList = [
+    { id: 'A', name: 'Fast Rush', fn: triggerEventA },
+    { id: 'B', name: 'Tank Wall', fn: triggerEventB },
+    { id: 'C', name: 'Right Sniper', fn: triggerEventC },
+    { id: 'D', name: 'Left Sniper', fn: triggerEventD },
+    { id: 'E', name: 'Tanks Fall', fn: triggerEventE },
+    { id: 'F', name: 'Spawners', fn: triggerEventF }
+];
 
 // c:在右侧从上到下依次生成侧向的发射子弹的怪
 function triggerEventC() {

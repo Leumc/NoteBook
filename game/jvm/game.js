@@ -15,6 +15,55 @@ const langSelector = document.getElementById('lang-selector');
 const pauseScreen = document.getElementById('pause-screen');
 const pauseStats = document.getElementById('pause-stats');
 
+// ================= 背景特效 (代码雨) =================
+const bgCanvas = document.getElementById('bg-canvas');
+const bgCtx = bgCanvas.getContext('2d');
+let bgDrops = [];
+const bgFontSize = 14;
+let bgColumns = 0;
+const bgChars = '01ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+{}|:"<>?\\[];./,';
+
+function resizeBgCanvas() {
+    if (!bgCanvas) return;
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+    bgColumns = Math.floor(bgCanvas.width / bgFontSize);
+    bgDrops = [];
+    for (let i = 0; i < bgColumns; i++) {
+        bgDrops[i] = Math.random() * -100; // 随机初始高度，形成错落有致的效果
+    }
+}
+window.addEventListener('resize', resizeBgCanvas);
+resizeBgCanvas();
+
+function drawBg() {
+    if (!bgCanvas) return;
+    bgCtx.fillStyle = 'rgba(12, 14, 20, 0.1)';
+    bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+    
+    bgCtx.font = bgFontSize + 'px monospace';
+    
+    for (let i = 0; i < bgDrops.length; i++) {
+        if (bgDrops[i] * bgFontSize > 0) {
+            const char = bgChars[Math.floor(Math.random() * bgChars.length)];
+            let r = Math.random();
+            // 随机不同颜色提升层次感
+            if (r > 0.95) bgCtx.fillStyle = '#ffcc00';
+            else if (r > 0.8) bgCtx.fillStyle = '#98c379';
+            else bgCtx.fillStyle = '#61afef';
+
+            bgCtx.fillText(char, i * bgFontSize, bgDrops[i] * bgFontSize);
+        }
+        
+        if (bgDrops[i] * bgFontSize > bgCanvas.height && Math.random() > 0.975) {
+            bgDrops[i] = 0;
+        }
+        bgDrops[i]++;
+    }
+    requestAnimationFrame(drawBg);
+}
+drawBg();
+
 // ================= 音频系统 =================
 const sounds = {
     apply: new Audio('sound/apply.mp3'),
@@ -28,10 +77,11 @@ const sounds = {
 // 降低频繁触发音效的音量，防止破音
 sounds.bullet.volume = 0.3;
 sounds.explode.volume = 0.4;
+sounds.apply.volume = 0.3;
 
 const bgm = new Audio('bgm/common.mp3');
 bgm.loop = true;
-bgm.volume = 0.5;
+bgm.volume = 0.8;
 
 function playSound(name) {
     if (sounds[name]) {
@@ -43,6 +93,7 @@ function playSound(name) {
 
 // 全局监听点击事件，播放 apply 音效
 document.addEventListener('click', (e) => {
+    if (e.target.closest('#start-screen')) return; // 主界面的按钮不播放音效
     if (e.target.closest('button') || 
         e.target.closest('.action-btn') || 
         e.target.closest('.board-btn') || 
@@ -74,7 +125,7 @@ const langConfig = {
             critDamage: { title: '重度崩溃', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'System.exit(1)', desc: '5% 概率直接秒杀普通代码块' },
             heal: { title: 'GC 回收', desc: '恢复 15 点系统负载' },
-            maxLifeUp: { title: '增加堆内存', desc: '负载上限 +2000 并回满' },
+            maxLifeUp: { title: '增加堆内存', desc: '负载上限 +20 并回满' },
             shieldMaxUp: { title: '安全沙箱', desc: '护盾上限 +10 并获得等量护盾' },
             dodgeRate: { title: '异常捕获 (try-catch)', desc: '10% 概率忽略受到的系统负载伤害' },
             lifeSteal: { title: '内存泄漏吸收', desc: '击杀代码块有 5% 概率恢复 1 点负载' },
@@ -85,7 +136,8 @@ const langConfig = {
             xpGainUp: { title: 'Profiler 分析', desc: '获得的经验值增加 20%' },
             focusedFire: { title: '同步锁', desc: '缩小多弹道散射角度 20%' },
             ammoCapUp: { title: '增大缓冲池', desc: '弹夹容量 +10' },
-            reloadSpeedUp: { title: '类加载加速', desc: '换弹时间减少 15%' }
+            reloadSpeedUp: { title: '类加载加速', desc: '换弹时间减少 15%' },
+            pickupRangeUp: { title: '磁性垃圾回收', desc: '碎片拾取范围增加 (+50)' }
         }
     },
     python: {
@@ -109,7 +161,7 @@ const langConfig = {
             critDamage: { title: '深层 Traceback', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'os._exit()', desc: '5% 概率直接秒杀普通代码块' },
             heal: { title: 'gc.collect()', desc: '恢复 15 点系统负载' },
-            maxLifeUp: { title: '放宽递归限制', desc: '负载上限 +2000 并回满' },
+            maxLifeUp: { title: '放宽递归限制', desc: '负载上限 +20 并回满' },
             shieldMaxUp: { title: '虚拟环境', desc: '护盾上限 +10 并获得等量护盾' },
             dodgeRate: { title: 'except Exception:', desc: '10% 概率忽略受到的系统负载伤害' },
             lifeSteal: { title: '垃圾回收复用', desc: '击杀代码块有 5% 概率恢复 1 点负载' },
@@ -120,7 +172,8 @@ const langConfig = {
             xpGainUp: { title: 'cProfile 剖析', desc: '获得的经验值增加 20%' },
             focusedFire: { title: '闭包绑定', desc: '缩小多弹道散射角度 20%' },
             ammoCapUp: { title: '增加生成器容量', desc: '弹夹容量 +10' },
-            reloadSpeedUp: { title: '热重载加速', desc: '换弹时间减少 15%' }
+            reloadSpeedUp: { title: '热重载加速', desc: '换弹时间减少 15%' },
+            pickupRangeUp: { title: '引用计数牵引', desc: '碎片拾取范围增加 (+50)' }
         }
     },
     cpp: {
@@ -144,7 +197,7 @@ const langConfig = {
             critDamage: { title: '未定义行为 (UB)', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'std::abort()', desc: '5% 概率直接秒杀普通代码块' },
             heal: { title: 'delete 释放', desc: '恢复 15 点系统负载' },
-            maxLifeUp: { title: '扩大虚拟内存', desc: '负载上限 +2000 并回满' },
+            maxLifeUp: { title: '扩大虚拟内存', desc: '负载上限 +20 并回满' },
             shieldMaxUp: { title: '内存保护', desc: '护盾上限 +10 并获得等量护盾' },
             dodgeRate: { title: 'catch(...)', desc: '10% 概率忽略受到的系统负载伤害' },
             lifeSteal: { title: '悬空指针重用', desc: '击杀代码块有 5% 概率恢复 1 点负载' },
@@ -155,7 +208,8 @@ const langConfig = {
             xpGainUp: { title: 'Valgrind 分析', desc: '获得的经验值增加 20%' },
             focusedFire: { title: '指针别名限制', desc: '缩小多弹道散射角度 20%' },
             ammoCapUp: { title: '对象池扩容', desc: '弹夹容量 +10' },
-            reloadSpeedUp: { title: '内存预分配', desc: '换弹时间减少 15%' }
+            reloadSpeedUp: { title: '内存预分配', desc: '换弹时间减少 15%' },
+            pickupRangeUp: { title: '智能指针探测', desc: '碎片拾取范围增加 (+50)' }
         }
     }
 };
@@ -163,8 +217,8 @@ const langConfig = {
 let currentLang = 'java';
 
 let gameState = 'START';
-let score = 0; let lives = 10000;
-let codeBlocks = []; let bullets = []; let enemyBullets = [];
+let score = 0; let lives = 200;
+let codeBlocks = []; let bullets = []; let enemyBullets = []; let drops = [];
 let blockSpawnInterval;
 let autoRegenInterval;
 let shieldRegenInterval;
@@ -191,8 +245,9 @@ const playerStats = {
     critDamageMult: 3.0, dodgeRate: 0.0, lifeStealRate: 0.0, lifeStealAmount: 1,
     globalSlow: 0.0, knockbackDist: 0, stunChance: 0.0, stunDuration: 60,
     bulletSizeMult: 1.0, xpMult: 1.0, executeChance: 0.0,
-    maxLives: 10000, maxShield: 0, shield: 0,
+    maxLives: 200, maxShield: 0, shield: 0,
     maxAmmo: 30, reloadSpeedModifier: 1.0,
+    pickupRange: 150,
     upgrades: {}, advanced: {}
 };
 
@@ -269,7 +324,7 @@ class EnemyBullet {
 
         const angleRad = Math.atan2(targetY - startY, targetX - startX);
         // 降低敌方子弹的初始速度与成长速度
-        const speed = 2.5 + (playerStats.level * 0.15);
+        const speed = 2.5 + (playerStats.level * 0.1);
         this.speedX = Math.cos(angleRad) * speed;
         this.speedY = Math.sin(angleRad) * speed;
 
@@ -288,6 +343,37 @@ class EnemyBullet {
         const el = this.element;
         setTimeout(() => el.remove(), 50); // 同样增加微小延迟
     }
+}
+
+class ExpDrop {
+    constructor(x, y, value) {
+        this.x = x; this.y = y; this.value = value;
+        this.element = document.createElement('div');
+        this.element.className = 'exp-drop';
+        this.element.textContent = Math.random() < 0.5 ? '0' : '1';
+        this.x += (Math.random() - 0.5) * 40;
+        this.y += (Math.random() - 0.5) * 40;
+        this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
+        container.appendChild(this.element);
+    }
+    update(globalSpeedMult) {
+        let dx = playerX - this.x;
+        let dy = playerY - this.y;
+        let dist = Math.hypot(dx, dy);
+        if (dist < playerStats.pickupRange) {
+            let speed = 15 * globalSpeedMult;
+            if (dist < speed) {
+                this.remove(); gainXp(this.value); return false;
+            }
+            this.x += (dx / dist) * speed; this.y += (dy / dist) * speed;
+        } else {
+            this.y += 0.5 * globalSpeedMult; 
+            if (this.y > window.innerHeight) { this.remove(); return false; }
+        }
+        this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
+        return true;
+    }
+    remove() { this.element.remove(); }
 }
 
 function showDamageText(x, y, amount, type) {
@@ -331,7 +417,7 @@ function updateEventTimerUI(ms) {
 function spawnCodeBlock() {
     if (gameState !== 'PLAYING' || activeBoss !== null) return;
     codeBlocks.push(new CodeBlock(container, playerStats.level));
-    let spawnRate = Math.max(200, 1500 * Math.pow(0.85, playerStats.level - 1));
+    let spawnRate = Math.max(400, 1500 * Math.pow(0.9, playerStats.level - 1));
     clearInterval(blockSpawnInterval);
     blockSpawnInterval = setInterval(spawnCodeBlock, spawnRate);
 }
@@ -424,13 +510,16 @@ function healPlayer(amount) {
 function gainXp(amount) {
     amount = amount * playerStats.xpMult;
     playerStats.xp += amount;
-    if (playerStats.xp >= playerStats.xpNeeded) {
+    let levelUps = 0;
+    while (playerStats.xp >= playerStats.xpNeeded) {
         playerStats.xp -= playerStats.xpNeeded;
-        
         playerStats.level++;
         playerStats.xpNeeded = Math.floor(playerStats.xpNeeded * 1.2);
+        levelUps++;
+    }
+    if (levelUps > 0) {
         levelDisplay.textContent = playerStats.level;
-        triggerLevelUp();
+        triggerLevelUp(levelUps);
     }
     xpBar.style.width = `${(playerStats.xp / playerStats.xpNeeded) * 100}%`;
 }
@@ -442,18 +531,18 @@ let currentRefreshCost = 5;
 let currentHealCost = 10;
 
 const fpCosts = {
-    multiShot: 10,
-    fireRate: 5,
+    multiShot: 8,
+    fireRate: 4,
     damageUp: 3,
     bulletSpeed: 2,
-    pierce: 8
+    pierce: 6
 };
 
-function triggerLevelUp() {
+function triggerLevelUp(levels = 1) {
     playSound('level_up');
     gameState = 'PAUSED';
     
-    playerStats.firepowerPoints = (playerStats.firepowerPoints || 0) + 3;
+    playerStats.firepowerPoints = (playerStats.firepowerPoints || 0) + (4 * levels);
     pendingFp = playerStats.firepowerPoints;
     pendingAlloc = { multiShot: 0, fireRate: 0, damageUp: 0, bulletSpeed: 0, pierce: 0 };
     selectedUpgOpt = null;
@@ -475,7 +564,7 @@ function renderLevelUpUI(options) {
     
     confirmBtn.onclick = () => {
         if (!selectedUpgOpt) {
-            playerStats.firepowerPoints = pendingFp + 3;
+            playerStats.firepowerPoints = pendingFp + 4;
         } else {
             playerStats.firepowerPoints = pendingFp;
         }
@@ -568,9 +657,14 @@ function renderUpgCards(options) {
 
         card.innerHTML = `<div class="upgrade-title">${opt.isAdvanced ? '【进阶】' : ''}${opt.title}</div><div class="upgrade-desc">${opt.desc}</div>${progressHtml}`;
         card.onclick = () => {
-            document.querySelectorAll('.upgrade-card').forEach(c => c.classList.remove('selected-card'));
-            card.classList.add('selected-card');
-            selectedUpgOpt = opt;
+            if (selectedUpgOpt === opt) {
+                card.classList.remove('selected-card');
+                selectedUpgOpt = null;
+            } else {
+                document.querySelectorAll('.upgrade-card').forEach(c => c.classList.remove('selected-card'));
+                card.classList.add('selected-card');
+                selectedUpgOpt = opt;
+            }
             updateConfirmBtnText();
         };
         upgradeContainer.appendChild(card);
@@ -580,7 +674,7 @@ function renderUpgCards(options) {
 function updateConfirmBtnText() {
     const confirmBtn = document.getElementById('confirm-upg-btn');
     if (!selectedUpgOpt) {
-        confirmBtn.textContent = '跳过升级 (+3 点数) / 确认';
+        confirmBtn.textContent = '跳过升级 (+4 点数) / 确认';
     } else {
         confirmBtn.textContent = '确认 (Confirm)';
     }
@@ -605,11 +699,8 @@ function updateFpPanel() {
     stats.forEach(k => {
         currentTotalCoreLevel += (playerStats.upgrades[k] || 0) + pendingAlloc[k];
     });
-    const maxCapacity = playerStats.level;
     
     document.getElementById('fp-available').textContent = pendingFp;
-    const capEl = document.getElementById('fp-capacity');
-    if (capEl) capEl.textContent = `${currentTotalCoreLevel}/${maxCapacity}`;
     
     const list = document.getElementById('fp-stats-list');
     list.innerHTML = '';
@@ -632,7 +723,7 @@ function updateFpPanel() {
         const currentLvl = (playerStats.upgrades[k] || 0) + pendingAlloc[k];
         const { cap, nextLevel } = getStatCap(k, playerStats.level);
         
-        const canAfford = pendingFp >= cost && currentLvl < cap && currentTotalCoreLevel < maxCapacity;
+        const canAfford = pendingFp >= cost && currentLvl < cap;
         const canRefund = pendingAlloc[k] > 0;
         
         row.innerHTML = `
@@ -732,7 +823,11 @@ function checkCollisions() {
                     c.stunTimer = playerStats.stunDuration;
                 }
                 if (playerStats.knockbackDist > 0 && !c.isSide) {
+                    let prevY = c.y;
                     c.y -= playerStats.knockbackDist;
+                    if (prevY >= 120 && c.y < 120) {
+                        c.y = 120; // 限制从屏蔽区出来的怪物无法被再次击退回屏蔽区
+                    }
                 }
 
                 const isCrit = Math.random() < playerStats.critRate;
@@ -764,7 +859,7 @@ function checkCollisions() {
                         createPopupInfo(cx, cy, err, 'error-explosion', isCrit);
                     }
 
-                    gainXp(xpVal);
+                    drops.push(new ExpDrop(cx, cy, xpVal));
                 }
 
                 if (b.pierceLeft > 0) { b.pierceLeft--; }
@@ -799,8 +894,16 @@ function gameLoop(timestamp) {
 
     if (!activeBoss) {
         gameTimeMs += dt;
-        if (gameTimeMs >= 450000 && !boss1Spawned) { // 450秒触发Boss
+        let bossTimerEl = document.getElementById('boss-timer');
+        if (bossTimerEl) {
+            let rMs = Math.max(0, 180000 - gameTimeMs);
+            let m = Math.floor(rMs / 60000).toString().padStart(2, '0');
+            let s = Math.floor((rMs % 60000) / 1000).toString().padStart(2, '0');
+            bossTimerEl.textContent = `${m}:${s}`;
+        }
+        if (gameTimeMs >= 180000 && !boss1Spawned) { // Boss 出场提前到 180 秒 (第 3 分钟)
             boss1Spawned = true;
+            if (bossTimerEl) bossTimerEl.parentElement.style.display = 'none';
             if (typeof spawnBoss1 === 'function') spawnBoss1();
         }
     } else {
@@ -808,7 +911,11 @@ function gameLoop(timestamp) {
         
         bossMobTimer -= dt;
         if (bossMobTimer <= 0) {
-            codeBlocks.push(new CodeBlock(container, playerStats.level));
+            let forceType = null;
+            let r = Math.random();
+            if (r < 0.20) forceType = 'gc_heal';
+            else if (r < 0.40) forceType = 'gc_slow';
+            codeBlocks.push(new CodeBlock(container, playerStats.level, forceType));
             bossMobTimer = 1500; // 恒定 1.5 秒生成怪物
         }
     }
@@ -847,6 +954,9 @@ function gameLoop(timestamp) {
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
         if (!enemyBullets[i].update(globalSpeedMult)) enemyBullets.splice(i, 1);
     }
+    for (let i = drops.length - 1; i >= 0; i--) {
+        if (!drops[i].update(globalSpeedMult)) drops.splice(i, 1);
+    }
     checkCollisions();
     requestAnimationFrame(gameLoop);
 }
@@ -865,6 +975,7 @@ function startGame() {
     gameTimeMs = 0; activeBoss = null; boss1Spawned = false;
     lastFrameTime = performance.now();
     bossMobTimer = 0;
+    window.bossPhase2 = false;
 
     playerStats.level = 1; playerStats.xp = 0; playerStats.xpNeeded = 20;
     playerStats.fireRateModifier = 1.0; playerStats.damage = 1;
@@ -873,11 +984,12 @@ function startGame() {
     playerStats.critDamageMult = 3.0; playerStats.dodgeRate = 0.0; playerStats.lifeStealRate = 0.0; playerStats.lifeStealAmount = 1;
     playerStats.globalSlow = 0.0; playerStats.knockbackDist = 0; playerStats.stunChance = 0.0; playerStats.stunDuration = 60;
     playerStats.bulletSizeMult = 1.0; playerStats.xpMult = 1.0; playerStats.executeChance = 0.0;
-    playerStats.maxLives = 10000; playerStats.maxShield = 0; playerStats.shield = 0;
+    playerStats.maxLives = 200; playerStats.maxShield = 0; playerStats.shield = 0;
+    playerStats.pickupRange = 150;
     playerStats.maxAmmo = 30; playerStats.reloadSpeedModifier = 1.0;
     playerStats.upgrades = {}; playerStats.advanced = {};
     playerStats.firepowerPoints = 0;
-    lives = 10000;
+    lives = 200;
     currentAmmo = 30; isReloading = false; reloadTimer = 0; maxReloadTimer = 0;
     
     const banner = document.getElementById('announcement-banner');
@@ -889,10 +1001,15 @@ function startGame() {
 
     langSelector.style.display = 'none'; // 游戏开始隐藏选择器
     startScreen.style.display = 'none'; gameOverScreen.style.display = 'none';
+    if (bgCanvas) bgCanvas.style.display = 'none'; // 游戏期间彻底隐藏代码雨
     topUi.style.display = 'flex'; executionZone.style.display = 'flex'; playerElement.style.display = 'flex';
     document.getElementById('top-exclusion-zone').style.display = 'flex';
+    
+    let bossTimerEl = document.getElementById('boss-timer');
+    if (bossTimerEl) bossTimerEl.parentElement.style.display = 'block';
 
     codeBlocks.forEach(b => b.remove()); bullets.forEach(b => b.remove()); enemyBullets.forEach(b => b.remove());
+    drops.forEach(d => d.remove()); drops = [];
     document.querySelectorAll('.error-explosion, .buff-explosion, .damage-text').forEach(e => e.remove());
     document.querySelectorAll('div[style*="z-index"]').forEach(e => { if (e.style.zIndex == '25' || e.style.zIndex == '100') e.remove(); });
     codeBlocks = []; bullets = []; enemyBullets = []; isPointerDown = false;
@@ -980,10 +1097,12 @@ function returnToMenu() {
     pauseScreen.style.display = 'none'; gameOverScreen.style.display = 'none';
     topUi.style.display = 'none'; executionZone.style.display = 'none'; playerElement.style.display = 'none';
     langSelector.style.display = 'block'; startScreen.style.display = 'flex';
+    if (bgCanvas) bgCanvas.style.display = 'block'; // 回到主菜单恢复代码雨
     clearInterval(blockSpawnInterval); clearInterval(autoRegenInterval); clearInterval(shieldRegenInterval); stopEventSystem();
     codeBlocks.forEach(b => b.remove()); codeBlocks = [];
     bullets.forEach(b => b.remove()); bullets = [];
     enemyBullets.forEach(b => b.remove()); enemyBullets = [];
+    drops.forEach(d => d.remove()); drops = [];
 }
 
 function endGame() {
@@ -995,6 +1114,7 @@ function endGame() {
     document.getElementById('top-exclusion-zone').style.display = 'none';
     topUi.style.display = 'none'; executionZone.style.display = 'none'; playerElement.style.display = 'none';
     langSelector.style.display = 'block'; // 游戏结束恢复选择器
+    if (bgCanvas) bgCanvas.style.display = 'block'; // 游戏结束恢复代码雨
     gameOverScreen.style.display = 'flex';
     clearInterval(blockSpawnInterval); clearInterval(autoRegenInterval); clearInterval(shieldRegenInterval);
     stopEventSystem();
@@ -1015,145 +1135,6 @@ container.addEventListener('pointermove', (e) => {
 });
 window.addEventListener('pointerup', () => isPointerDown = false); window.addEventListener('pointercancel', () => isPointerDown = false);
 
-// ================= Cheat Menu 秘籍监控 =================
-let konamiCode = "leumcdevopen";
-let konamiIndex = 0;
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') togglePause();
-
-    if (e.key === konamiCode[konamiIndex]) {
-        konamiIndex++;
-        if (konamiIndex === konamiCode.length) {
-            document.getElementById('cheat-menu').style.display = 'flex';
-            showCheatPage('cheat-main-menu');
-            konamiIndex = 0;
-        }
-    } else {
-        konamiIndex = 0;
-        if (e.key === konamiCode[0]) konamiIndex = 1;
-    }
 });
-
-function showCheatPage(id) {
-    document.querySelectorAll('.cheat-page').forEach(el => el.style.display = 'none');
-    document.getElementById(id).style.display = 'flex';
-    
-    if (id === 'cheat-stat-menu') {
-        document.getElementById('cs-level').value = playerStats.level;
-        document.getElementById('cs-damage').value = playerStats.damage;
-        document.getElementById('cs-maxlives').value = playerStats.maxLives;
-        document.getElementById('cs-maxshield').value = playerStats.maxShield;
-        document.getElementById('cs-crit').value = playerStats.critRate;
-        document.getElementById('cs-spd').value = playerStats.bulletSpeed;
-    } else if (id === 'cheat-upg-menu') {
-        initCheatUpgrades();
-    }
-}
-
-function applyCheatStats() {
-    playerStats.level = parseInt(document.getElementById('cs-level').value) || 1;
-    levelDisplay.textContent = playerStats.level;
-    playerStats.damage = parseInt(document.getElementById('cs-damage').value) || 1;
-    playerStats.maxLives = parseInt(document.getElementById('cs-maxlives').value) || 10000;
-    playerStats.maxShield = parseInt(document.getElementById('cs-maxshield').value) || 0;
-    playerStats.critRate = parseFloat(document.getElementById('cs-crit').value) || 0;
-    playerStats.bulletSpeed = parseInt(document.getElementById('cs-spd').value) || 8;
-    lives = playerStats.maxLives;
-    playerStats.shield = playerStats.maxShield;
-    updateLivesDisplay();
-    updateShieldDisplay();
-    document.getElementById('cheat-menu').style.display = 'none';
-}
-
-function spawnDevMob(index) {
-    let def = typeof monsterDefs !== 'undefined' ? monsterDefs[index] : null;
-    if (!def) return;
-    let mob = new CodeBlock(container, playerStats.level, def);
-    if (!def.isSide) {
-        mob.x = Math.random() * (window.innerWidth - mob.width);
-        mob.y = 100;
-        mob.element.style.transform = `translate3d(${mob.x}px, ${mob.y}px, 0)`;
-    }
-    codeBlocks.push(mob);
-}
-
-function initCheatUpgrades() {
-    const grid = document.getElementById('cheat-upg-grid');
-    grid.innerHTML = '';
-    Object.keys(langConfig.java.upgrades).forEach(k => {
-        let b = document.createElement('button');
-        b.className = 'action-btn';
-        b.style.fontSize = '12px';
-        b.style.padding = '8px';
-        b.textContent = langConfig[currentLang].upgrades[k].title;
-        b.onclick = () => cheatGrantUpgrade(k);
-        grid.appendChild(b);
-    });
-
-    // 添加进阶升级按钮
-    const advKeys = ['crit', 'critDamage', 'execute', 'maxLifeUp', 'shieldMaxUp', 'dodgeRate', 'lifeSteal', 'slowAura', 'knockback', 'stunChance', 'bulletSize', 'xpGainUp', 'focusedFire', 'ammoCapUp', 'reloadSpeedUp'];
-    advKeys.forEach(k => {
-        let b = document.createElement('button');
-        b.className = 'action-btn';
-        b.style.fontSize = '12px';
-        b.style.padding = '8px';
-        b.style.borderColor = '#ffcc00';
-        b.style.color = '#ffcc00';
-        b.textContent = advancedUpgradeTitles[k];
-        b.onclick = () => cheatGrantAdvUpgrade(k);
-        grid.appendChild(b);
-    });
-}
-
-function cheatGrantUpgrade(id) {
-    playerStats.upgrades[id] = (playerStats.upgrades[id] || 0) + 1;
-    switch(id) {
-        case 'multiShot': playerStats.multiShot += 1; break;
-        case 'fireRate': playerStats.fireRateModifier *= 0.8; break;
-        case 'damageUp': playerStats.damage += 5; break;
-        case 'bulletSpeed': playerStats.bulletSpeed *= 1.3; break;
-        case 'pierce': playerStats.pierce += 1; break;
-        case 'crit': playerStats.critRate += 0.15; break;
-        case 'critDamage': playerStats.critDamageMult += 1.0; break;
-        case 'execute': playerStats.executeChance += 0.05; break;
-        case 'heal': healPlayer(15); break;
-        case 'maxLifeUp': playerStats.maxLives += 2000; healPlayer(playerStats.maxLives); break;
-        case 'shieldMaxUp': playerStats.maxShield += 10; playerStats.shield += 10; updateShieldDisplay(); break;
-        case 'dodgeRate': playerStats.dodgeRate += 0.1; break;
-        case 'lifeSteal': playerStats.lifeStealRate += 0.05; break;
-        case 'slowAura': playerStats.globalSlow += 0.05; break;
-        case 'knockback': playerStats.knockbackDist += 10; break;
-        case 'stunChance': playerStats.stunChance += 0.1; break;
-        case 'bulletSize': playerStats.bulletSizeMult += 0.5; break;
-        case 'xpGainUp': playerStats.xpMult += 0.2; break;
-        case 'focusedFire': playerStats.spreadAngle = Math.max(5, playerStats.spreadAngle * 0.8); break;
-        case 'ammoCapUp': playerStats.maxAmmo += 10; updateAmmoDisplay(); break;
-        case 'reloadSpeedUp': playerStats.reloadSpeedModifier *= 0.85; break;
-    }
-    createPopupInfo(playerX, playerY, '+ Upgrade Acquired', 'buff-explosion');
-}
-
-function cheatGrantAdvUpgrade(id) {
-    if (!playerStats.advanced) playerStats.advanced = {};
-    playerStats.advanced[id] = true;
-    delete playerStats.upgrades[id]; // 获得进阶后清除基础层数记录
-
-    switch(id) {
-        case 'crit': playerStats.critRate = 1.0; playerStats.critDamageMult += 2.0; break;
-        case 'critDamage': playerStats.critDamageMult += 15.0; break;
-        case 'execute': playerStats.executeChance = 0.50; break;
-        case 'maxLifeUp': playerStats.maxLives += 50000; healPlayer(playerStats.maxLives); break;
-        case 'shieldMaxUp': playerStats.maxShield += 300; playerStats.shield += 300; updateShieldDisplay(); break;
-        case 'dodgeRate': playerStats.dodgeRate = 0.80; break;
-        case 'lifeSteal': playerStats.lifeStealRate = 0.50; playerStats.lifeStealAmount = 5; break;
-        case 'slowAura': playerStats.globalSlow += 0.75; break;
-        case 'knockback': playerStats.knockbackDist += 150; break;
-        case 'stunChance': playerStats.stunChance = 0.80; playerStats.stunDuration = 180; break;
-        case 'bulletSize': playerStats.bulletSizeMult += 4.0; playerStats.damage += 10; break;
-        case 'xpGainUp': playerStats.xpMult += 4.0; break;
-        case 'focusedFire': playerStats.spreadAngle = 0; break;
-        case 'ammoCapUp': playerStats.maxAmmo += 100; updateAmmoDisplay(); break;
-        case 'reloadSpeedUp': playerStats.reloadSpeedModifier *= 0.4; break;
-    }
-    createPopupInfo(playerX, playerY, '+ Adv Upgrade Acquired', 'buff-explosion');
-}

@@ -13,7 +13,8 @@ const advancedUpgradeTitles = {
     xpGainUp: '全知全能',
     focusedFire: '同调射线',
     ammoCapUp: '海量吞吐',
-    reloadSpeedUp: '光速重载'
+    reloadSpeedUp: '光速重载',
+    pickupRangeUp: '全域内存统御'
 };
 
 function getUpgradePool(playerStats, healCallback) {
@@ -33,7 +34,7 @@ function getUpgradePool(playerStats, healCallback) {
         { id: 'critDamage', cap: 5, title: opts.critDamage.title, desc: opts.critDamage.desc, apply: () => { playerStats.critDamageMult += 1.0; track('critDamage'); } },
         { id: 'execute', cap: 3, title: opts.execute.title, desc: opts.execute.desc, apply: () => { playerStats.executeChance += 0.05; track('execute'); } },
 
-        { id: 'maxLifeUp', cap: 5, title: opts.maxLifeUp.title, desc: opts.maxLifeUp.desc, apply: () => { playerStats.maxLives += 2000; healCallback(playerStats.maxLives); track('maxLifeUp'); } },
+        { id: 'maxLifeUp', cap: 5, title: opts.maxLifeUp.title, desc: opts.maxLifeUp.desc, apply: () => { playerStats.maxLives += 20; healCallback(playerStats.maxLives); track('maxLifeUp'); } },
         { id: 'shieldMaxUp', cap: 5, title: opts.shieldMaxUp.title, desc: opts.shieldMaxUp.desc, apply: () => { playerStats.maxShield += 10; playerStats.shield += 10; if (typeof updateShieldDisplay === 'function') updateShieldDisplay(); track('shieldMaxUp'); } },
         { id: 'dodgeRate', cap: 5, title: opts.dodgeRate.title, desc: opts.dodgeRate.desc, apply: () => { playerStats.dodgeRate += 0.10; track('dodgeRate'); } },
         { id: 'lifeSteal', cap: 5, title: opts.lifeSteal.title, desc: opts.lifeSteal.desc, apply: () => { playerStats.lifeStealRate += 0.05; track('lifeSteal'); } },
@@ -50,14 +51,15 @@ function getUpgradePool(playerStats, healCallback) {
         
         // ============ 6. 弹夹管理体系 ============
         { id: 'ammoCapUp', cap: 5, title: opts.ammoCapUp.title, desc: opts.ammoCapUp.desc, apply: () => { playerStats.maxAmmo += 10; if(typeof updateAmmoDisplay==='function') updateAmmoDisplay(); track('ammoCapUp'); } },
-        { id: 'reloadSpeedUp', cap: 5, title: opts.reloadSpeedUp.title, desc: opts.reloadSpeedUp.desc, apply: () => { playerStats.reloadSpeedModifier *= 0.85; track('reloadSpeedUp'); } }
+        { id: 'reloadSpeedUp', cap: 5, title: opts.reloadSpeedUp.title, desc: opts.reloadSpeedUp.desc, apply: () => { playerStats.reloadSpeedModifier *= 0.85; track('reloadSpeedUp'); } },
+        { id: 'pickupRangeUp', cap: 5, title: opts.pickupRangeUp.title, desc: opts.pickupRangeUp.desc, apply: () => { playerStats.pickupRange += 50; track('pickupRangeUp'); } }
     ];
 
     const advDefs = {
         crit: { title: advancedUpgradeTitles.crit, desc: '暴击率变为 100%，额外暴击倍率 +2.0x', apply: () => { playerStats.critRate -= 0.15 * 5; playerStats.critRate = 1.0; playerStats.critDamageMult += 2.0; trackAdv('crit'); } },
         critDamage: { title: advancedUpgradeTitles.critDamage, desc: '暴击伤害倍率极大幅度提升 (+15.0x)', apply: () => { playerStats.critDamageMult -= 1.0 * 5; playerStats.critDamageMult += 15.0; trackAdv('critDamage'); } },
         execute: { title: advancedUpgradeTitles.execute, desc: '秒杀概率升至 50%', apply: () => { playerStats.executeChance -= 0.05 * 3; playerStats.executeChance += 0.50; trackAdv('execute'); } },
-        maxLifeUp: { title: advancedUpgradeTitles.maxLifeUp, desc: '负载上限提升 50000 点并瞬间回满', apply: () => { playerStats.maxLives -= 2000 * 5; playerStats.maxLives += 50000; healCallback(playerStats.maxLives); trackAdv('maxLifeUp'); } },
+        maxLifeUp: { title: advancedUpgradeTitles.maxLifeUp, desc: '负载上限提升 400 点并瞬间回满', apply: () => { playerStats.maxLives -= 20 * 5; playerStats.maxLives += 400; healCallback(playerStats.maxLives); trackAdv('maxLifeUp'); } },
         shieldMaxUp: { title: advancedUpgradeTitles.shieldMaxUp, desc: '护盾上限增加 300，并获得等量护盾', apply: () => { playerStats.maxShield -= 10 * 5; playerStats.maxShield += 300; playerStats.shield += 300; if (typeof updateShieldDisplay === 'function') updateShieldDisplay(); trackAdv('shieldMaxUp'); } },
         dodgeRate: { title: advancedUpgradeTitles.dodgeRate, desc: '获得 80% 的绝对闪避概率', apply: () => { playerStats.dodgeRate -= 0.10 * 5; playerStats.dodgeRate += 0.80; trackAdv('dodgeRate'); } },
         lifeSteal: { title: advancedUpgradeTitles.lifeSteal, desc: '吸血概率变为 50%，吸血量大幅增至 5', apply: () => { playerStats.lifeStealRate -= 0.05 * 5; playerStats.lifeStealRate += 0.50; playerStats.lifeStealAmount = 5; trackAdv('lifeSteal'); } },
@@ -68,7 +70,8 @@ function getUpgradePool(playerStats, healCallback) {
         xpGainUp: { title: advancedUpgradeTitles.xpGainUp, desc: '经验获取倍率变为 500%', apply: () => { playerStats.xpMult -= 0.2 * 5; playerStats.xpMult += 4.0; trackAdv('xpGainUp'); } },
         focusedFire: { title: advancedUpgradeTitles.focusedFire, desc: '多弹道不再散射，变为完全同向的收束攻击', apply: () => { playerStats.spreadAngle = 0; trackAdv('focusedFire'); } },
         ammoCapUp: { title: advancedUpgradeTitles.ammoCapUp, desc: '弹夹容量极大提升 (+100)', apply: () => { playerStats.maxAmmo -= 10 * 5; playerStats.maxAmmo += 100; if(typeof updateAmmoDisplay==='function') updateAmmoDisplay(); trackAdv('ammoCapUp'); } },
-        reloadSpeedUp: { title: advancedUpgradeTitles.reloadSpeedUp, desc: '换弹时间极度压缩 (-60%)', apply: () => { playerStats.reloadSpeedModifier /= Math.pow(0.85, 5); playerStats.reloadSpeedModifier *= 0.4; trackAdv('reloadSpeedUp'); } }
+        reloadSpeedUp: { title: advancedUpgradeTitles.reloadSpeedUp, desc: '换弹时间极度压缩 (-60%)', apply: () => { playerStats.reloadSpeedModifier /= Math.pow(0.85, 5); playerStats.reloadSpeedModifier *= 0.4; trackAdv('reloadSpeedUp'); } },
+        pickupRangeUp: { title: advancedUpgradeTitles.pickupRangeUp, desc: '代码碎片拾取范围变为无限', apply: () => { playerStats.pickupRange = 9999; trackAdv('pickupRangeUp'); } }
     };
 
     let finalPool = [];
