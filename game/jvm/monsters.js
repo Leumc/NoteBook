@@ -140,7 +140,7 @@ class CodeBlock {
         this.customRoleObj = def;
 
         this.dashTimer = 0;
-        this.fireCooldown = Math.max(80, 200 - currentLevel * 5); 
+        this.fireCooldown = Math.max(120, 300 - currentLevel * 5); 
         this.spawnCooldown = 120; 
         this.stunTimer = 0;
 
@@ -212,7 +212,7 @@ class CodeBlock {
                 this.fireCooldown -= globalSpeedMult;
                 if (this.fireCooldown <= 0) {
                     spawnEnemyBulletCallback(this.x + this.width/2, this.y + this.height/2, playerX, playerY);
-                    this.fireCooldown = Math.max(80, 200 - currentLevel * 5);
+                    this.fireCooldown = Math.max(120, 300 - currentLevel * 5);
                 }
                 break;
             case 'dasher':

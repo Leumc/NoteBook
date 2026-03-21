@@ -15,6 +15,42 @@ const langSelector = document.getElementById('lang-selector');
 const pauseScreen = document.getElementById('pause-screen');
 const pauseStats = document.getElementById('pause-stats');
 
+// ================= 音频系统 =================
+const sounds = {
+    apply: new Audio('sound/apply.mp3'),
+    bullet: new Audio('sound/bullet.mp3'),
+    death: new Audio('sound/death.mp3'),
+    level_up: new Audio('sound/level_up.mp3'),
+    explode: new Audio('sound/explode.mp3'),
+    hurt: new Audio('sound/hurt.mp3'),
+    shield: new Audio('sound/shield.mp3')
+};
+// 降低频繁触发音效的音量，防止破音
+sounds.bullet.volume = 0.3;
+sounds.explode.volume = 0.4;
+
+const bgm = new Audio('bgm/common.mp3');
+bgm.loop = true;
+bgm.volume = 0.5;
+
+function playSound(name) {
+    if (sounds[name]) {
+        let snd = sounds[name].cloneNode(); // 允许音效叠加播放
+        snd.volume = sounds[name].volume;
+        snd.play().catch(e => {});
+    }
+}
+
+// 全局监听点击事件，播放 apply 音效
+document.addEventListener('click', (e) => {
+    if (e.target.closest('button') || 
+        e.target.closest('.action-btn') || 
+        e.target.closest('.board-btn') || 
+        e.target.closest('.upgrade-card')) {
+        playSound('apply');
+    }
+});
+
 // ================= 全局语言配置字典 =================
 const langConfig = {
     java: {
@@ -222,7 +258,8 @@ class EnemyBullet {
         this.y = startY;
 
         const angleRad = Math.atan2(targetY - startY, targetX - startX);
-        const speed = 4 + (playerStats.level * 0.2);
+        // 降低敌方子弹的初始速度与成长速度
+        const speed = 2.5 + (playerStats.level * 0.15);
         this.speedX = Math.cos(angleRad) * speed;
         this.speedY = Math.sin(angleRad) * speed;
 
@@ -314,6 +351,7 @@ function takePlayerDamage(amount, bypassShield = false) {
     
     let damageToLives = amount;
     if (!bypassShield && playerStats.shield > 0) {
+        playSound('shield');
         if (playerStats.shield >= amount) {
             playerStats.shield -= amount;
             damageToLives = 0;
@@ -327,6 +365,7 @@ function takePlayerDamage(amount, bypassShield = false) {
     }
 
     if (damageToLives > 0) {
+        playSound('hurt');
         lives -= damageToLives; updateLivesDisplay();
         showDamageText(playerX, playerY - 20, damageToLives, 'player');
 
@@ -359,6 +398,7 @@ function gainXp(amount) {
 }
 
 function triggerLevelUp() {
+    playSound('level_up');
     gameState = 'PAUSED';
     const pool = getUpgradePool(playerStats, healPlayer);
     const shuffled = [...pool].sort(() => 0.5 - Math.random());
@@ -375,6 +415,7 @@ function triggerLevelUp() {
 }
 
 function fireBullets() {
+    playSound('bullet');
     const count = playerStats.multiShot;
     if (count === 1) { bullets.push(new Bullet(playerX, playerY, 0)); }
     else {
@@ -417,6 +458,7 @@ function checkCollisions() {
                 showDamageText(c.x + c.width / 2, c.y, actualDamage, isCrit ? 'crit' : 'normal');
 
                 if (c.takeDamage(actualDamage)) {
+                    playSound('explode');
                     if (Math.random() < playerStats.lifeStealRate) {
                         healPlayer(playerStats.lifeStealAmount);
                     }
@@ -517,6 +559,8 @@ function handlePlayerMove(clientX, clientY) {
 }
 
 function startGame() {
+    bgm.currentTime = 0;
+    bgm.play().catch(e => {});
     score = 0; stopTheWorldTimer = 0;
     gameTimeMs = 0; activeBoss = null; boss1Spawned = false;
     lastFrameTime = performance.now();
@@ -621,6 +665,8 @@ function togglePause() {
 }
 
 function returnToMenu() {
+    bgm.pause();
+    bgm.currentTime = 0;
     gameState = 'START';
     pauseScreen.style.display = 'none'; gameOverScreen.style.display = 'none';
     topUi.style.display = 'none'; executionZone.style.display = 'none'; playerElement.style.display = 'none';
@@ -632,6 +678,9 @@ function returnToMenu() {
 }
 
 function endGame() {
+    playSound('death');
+    bgm.pause();
+    bgm.currentTime = 0;
     gameState = 'GAMEOVER';
     document.getElementById('final-score').textContent = score; document.getElementById('final-level').textContent = playerStats.level;
     topUi.style.display = 'none'; executionZone.style.display = 'none'; playerElement.style.display = 'none';

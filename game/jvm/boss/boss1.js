@@ -130,7 +130,7 @@ class Boss1 {
         this.shieldTimer -= globalSpeedMult; this.healTimer -= globalSpeedMult; this.fireTimer -= globalSpeedMult;
         if (this.shieldTimer <= 0) { this.shieldTimer = 600; this.trySpawnShields(); }
         if (this.healTimer <= 0) { this.healTimer = 600; this.doHeal(); }
-        if (this.fireTimer <= 0) { this.fireTimer = 20; this.doFire(); } // 主炮射速大幅加快
+        if (this.fireTimer <= 0) { this.fireTimer = 60; this.doFire(); } // 降低主炮射速以给玩家反应时间
 
         for (let i = this.staticShields.length - 1; i >= 0; i--) {
             let s = this.staticShields[i];
