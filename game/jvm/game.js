@@ -74,7 +74,7 @@ const langConfig = {
             critDamage: { title: '重度崩溃', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'System.exit(1)', desc: '5% 概率直接秒杀普通代码块' },
             heal: { title: 'GC 回收', desc: '恢复 15 点系统负载' },
-            maxLifeUp: { title: '增加堆内存', desc: '负载上限 +20 并回满' },
+            maxLifeUp: { title: '增加堆内存', desc: '负载上限 +2000 并回满' },
             shieldMaxUp: { title: '安全沙箱', desc: '护盾上限 +10 并获得等量护盾' },
             dodgeRate: { title: '异常捕获 (try-catch)', desc: '10% 概率忽略受到的系统负载伤害' },
             lifeSteal: { title: '内存泄漏吸收', desc: '击杀代码块有 5% 概率恢复 1 点负载' },
@@ -109,7 +109,7 @@ const langConfig = {
             critDamage: { title: '深层 Traceback', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'os._exit()', desc: '5% 概率直接秒杀普通代码块' },
             heal: { title: 'gc.collect()', desc: '恢复 15 点系统负载' },
-            maxLifeUp: { title: '放宽递归限制', desc: '负载上限 +20 并回满' },
+            maxLifeUp: { title: '放宽递归限制', desc: '负载上限 +2000 并回满' },
             shieldMaxUp: { title: '虚拟环境', desc: '护盾上限 +10 并获得等量护盾' },
             dodgeRate: { title: 'except Exception:', desc: '10% 概率忽略受到的系统负载伤害' },
             lifeSteal: { title: '垃圾回收复用', desc: '击杀代码块有 5% 概率恢复 1 点负载' },
@@ -144,7 +144,7 @@ const langConfig = {
             critDamage: { title: '未定义行为 (UB)', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'std::abort()', desc: '5% 概率直接秒杀普通代码块' },
             heal: { title: 'delete 释放', desc: '恢复 15 点系统负载' },
-            maxLifeUp: { title: '扩大虚拟内存', desc: '负载上限 +20 并回满' },
+            maxLifeUp: { title: '扩大虚拟内存', desc: '负载上限 +2000 并回满' },
             shieldMaxUp: { title: '内存保护', desc: '护盾上限 +10 并获得等量护盾' },
             dodgeRate: { title: 'catch(...)', desc: '10% 概率忽略受到的系统负载伤害' },
             lifeSteal: { title: '悬空指针重用', desc: '击杀代码块有 5% 概率恢复 1 点负载' },
@@ -1117,7 +1117,7 @@ function cheatGrantUpgrade(id) {
         case 'critDamage': playerStats.critDamageMult += 1.0; break;
         case 'execute': playerStats.executeChance += 0.05; break;
         case 'heal': healPlayer(15); break;
-        case 'maxLifeUp': playerStats.maxLives += 20; healPlayer(playerStats.maxLives); break;
+        case 'maxLifeUp': playerStats.maxLives += 2000; healPlayer(playerStats.maxLives); break;
         case 'shieldMaxUp': playerStats.maxShield += 10; playerStats.shield += 10; updateShieldDisplay(); break;
         case 'dodgeRate': playerStats.dodgeRate += 0.1; break;
         case 'lifeSteal': playerStats.lifeStealRate += 0.05; break;
@@ -1142,7 +1142,7 @@ function cheatGrantAdvUpgrade(id) {
         case 'crit': playerStats.critRate = 1.0; playerStats.critDamageMult += 2.0; break;
         case 'critDamage': playerStats.critDamageMult += 15.0; break;
         case 'execute': playerStats.executeChance = 0.50; break;
-        case 'maxLifeUp': playerStats.maxLives += 500; healPlayer(playerStats.maxLives); break;
+        case 'maxLifeUp': playerStats.maxLives += 50000; healPlayer(playerStats.maxLives); break;
         case 'shieldMaxUp': playerStats.maxShield += 300; playerStats.shield += 300; updateShieldDisplay(); break;
         case 'dodgeRate': playerStats.dodgeRate = 0.80; break;
         case 'lifeSteal': playerStats.lifeStealRate = 0.50; playerStats.lifeStealAmount = 5; break;

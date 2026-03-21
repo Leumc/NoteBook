@@ -33,7 +33,7 @@ function getUpgradePool(playerStats, healCallback) {
         { id: 'critDamage', cap: 5, title: opts.critDamage.title, desc: opts.critDamage.desc, apply: () => { playerStats.critDamageMult += 1.0; track('critDamage'); } },
         { id: 'execute', cap: 3, title: opts.execute.title, desc: opts.execute.desc, apply: () => { playerStats.executeChance += 0.05; track('execute'); } },
 
-        { id: 'maxLifeUp', cap: 5, title: opts.maxLifeUp.title, desc: opts.maxLifeUp.desc, apply: () => { playerStats.maxLives += 20; healCallback(playerStats.maxLives); track('maxLifeUp'); } },
+        { id: 'maxLifeUp', cap: 5, title: opts.maxLifeUp.title, desc: opts.maxLifeUp.desc, apply: () => { playerStats.maxLives += 2000; healCallback(playerStats.maxLives); track('maxLifeUp'); } },
         { id: 'shieldMaxUp', cap: 5, title: opts.shieldMaxUp.title, desc: opts.shieldMaxUp.desc, apply: () => { playerStats.maxShield += 10; playerStats.shield += 10; if (typeof updateShieldDisplay === 'function') updateShieldDisplay(); track('shieldMaxUp'); } },
         { id: 'dodgeRate', cap: 5, title: opts.dodgeRate.title, desc: opts.dodgeRate.desc, apply: () => { playerStats.dodgeRate += 0.10; track('dodgeRate'); } },
         { id: 'lifeSteal', cap: 5, title: opts.lifeSteal.title, desc: opts.lifeSteal.desc, apply: () => { playerStats.lifeStealRate += 0.05; track('lifeSteal'); } },
@@ -57,7 +57,7 @@ function getUpgradePool(playerStats, healCallback) {
         crit: { title: advancedUpgradeTitles.crit, desc: '暴击率变为 100%，额外暴击倍率 +2.0x', apply: () => { playerStats.critRate -= 0.15 * 5; playerStats.critRate = 1.0; playerStats.critDamageMult += 2.0; trackAdv('crit'); } },
         critDamage: { title: advancedUpgradeTitles.critDamage, desc: '暴击伤害倍率极大幅度提升 (+15.0x)', apply: () => { playerStats.critDamageMult -= 1.0 * 5; playerStats.critDamageMult += 15.0; trackAdv('critDamage'); } },
         execute: { title: advancedUpgradeTitles.execute, desc: '秒杀概率升至 50%', apply: () => { playerStats.executeChance -= 0.05 * 3; playerStats.executeChance += 0.50; trackAdv('execute'); } },
-        maxLifeUp: { title: advancedUpgradeTitles.maxLifeUp, desc: '负载上限提升 500 点并瞬间回满', apply: () => { playerStats.maxLives -= 20 * 5; playerStats.maxLives += 500; healCallback(playerStats.maxLives); trackAdv('maxLifeUp'); } },
+        maxLifeUp: { title: advancedUpgradeTitles.maxLifeUp, desc: '负载上限提升 50000 点并瞬间回满', apply: () => { playerStats.maxLives -= 2000 * 5; playerStats.maxLives += 50000; healCallback(playerStats.maxLives); trackAdv('maxLifeUp'); } },
         shieldMaxUp: { title: advancedUpgradeTitles.shieldMaxUp, desc: '护盾上限增加 300，并获得等量护盾', apply: () => { playerStats.maxShield -= 10 * 5; playerStats.maxShield += 300; playerStats.shield += 300; if (typeof updateShieldDisplay === 'function') updateShieldDisplay(); trackAdv('shieldMaxUp'); } },
         dodgeRate: { title: advancedUpgradeTitles.dodgeRate, desc: '获得 80% 的绝对闪避概率', apply: () => { playerStats.dodgeRate -= 0.10 * 5; playerStats.dodgeRate += 0.80; trackAdv('dodgeRate'); } },
         lifeSteal: { title: advancedUpgradeTitles.lifeSteal, desc: '吸血概率变为 50%，吸血量大幅增至 5', apply: () => { playerStats.lifeStealRate -= 0.05 * 5; playerStats.lifeStealRate += 0.50; playerStats.lifeStealAmount = 5; trackAdv('lifeSteal'); } },
