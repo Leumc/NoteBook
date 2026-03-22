@@ -44,6 +44,7 @@ class Boss1 {
         this.targetY = window.innerHeight / 3;
         this.angle = 0;
         this.moveTimer = 200;
+        this.dying = false;
         
         this.shieldTimer = 0;
         this.healTimer = 0;
@@ -95,11 +96,20 @@ class Boss1 {
         // 添加 Boss 机制无敌判定
         const origCoreTakeDamage = this.core.takeDamage.bind(this.core);
         this.core.takeDamage = (amount) => {
+            if (this.dying) return false; // 死亡动画期间锁血
             const hasOtherParts = this.allParts.some(p => p !== this.core && !p.destroyed);
             if (hasOtherParts) {
                 // 其他逻辑块存活时免疫伤害
                 showDamageText(this.core.x + this.core.width / 2, this.core.y, "IMMUNE", 'crit');
                 return false;
+            }
+            
+            let willDie = (this.core.hp - amount) <= 0;
+            if (willDie) {
+                this.core.hp = 0;
+                this.dying = true;
+                this.dieSequence();
+                return false; // 截断死亡，由 dieSequence() 来处理后续
             }
             return origCoreTakeDamage(amount);
         };
@@ -118,10 +128,7 @@ class Boss1 {
     }
 
     update(globalSpeedMult) {
-        if (this.core.destroyed) {
-            this.die();
-            return;
-        }
+        if (this.dying) return; // 死亡演出期间停止所有攻击和移动
 
         // 缓动移动逻辑与圆周运动
         this.centerX += (this.targetX - this.centerX) * 0.02 * globalSpeedMult;
@@ -190,7 +197,8 @@ class Boss1 {
             if (!tooClose) {
                 let sb = new CodeBlock(container, playerStats.level, {
                     type: 'boss_shield_wall', color: '#aaaaaa', hp: 10000 * Math.pow(1.20, playerStats.level - 1),
-                    code: txt.shield_wall.code, err: txt.shield_wall.err, isBossPart: true, customRole: 'shield_wall'
+                    code: txt.shield_wall.code, err: txt.shield_wall.err, isBossPart: true, customRole: 'shield_wall',
+                    xp: 5 // 补全漏掉的属性，击破护盾墙现在会正常掉落高额经验
                 });
                 sb.element.classList.add('boss-code-block');
                 sb.element.style.borderColor = '#aaaaaa';
@@ -225,13 +233,36 @@ class Boss1 {
         }
     }
 
+    dieSequence() {
+        if (typeof bgmSystem !== 'undefined') bgmSystem.stop(); // 停止音乐，营造爆炸前的静谧
+        this.shieldTimer = Infinity; this.healTimer = Infinity; this.fireTimer = Infinity; this.moveTimer = Infinity;
+        let explosions = 0;
+        
+        let animInterval = setInterval(() => {
+            explosions++;
+            let ex = this.centerX + (Math.random() - 0.5) * 250;
+            let ey = this.centerY + (Math.random() - 0.5) * 250;
+            createPopupInfo(ex, ey, "CRITICAL FAULT", 'error-explosion', true);
+            playSound('explode');
+            
+            container.style.transform = `translate(${(Math.random() - 0.5) * 25}px, ${(Math.random() - 0.5) * 25}px)`;
+            
+            if (explosions >= 15) {
+                clearInterval(animInterval);
+                container.style.transform = 'none';
+                this.die();
+            }
+        }, 180);
+    }
+
     die() {
         for (let part of this.allParts) { if (!part.destroyed) { part.takeDamage(999999); part.remove(); let idx = codeBlocks.indexOf(part); if(idx !== -1) codeBlocks.splice(idx, 1); } }
         for (let s of this.staticShields) { if (!s.destroyed) { s.remove(); let idx = codeBlocks.indexOf(s); if(idx !== -1) codeBlocks.splice(idx, 1); } }
         activeBoss = null;
         window.bossPhase2 = false;
         createPopupInfo(this.centerX, this.centerY, 'BOSS DEFEATED\nOOM-Reaper Terminated', 'boss-death-explosion');
-        gainXp(1000);
+        // 核心修复：根据玩家当前的升级所需经验，动态给予巨额奖励，保底直升 4 级并额外附加 1000 经验！
+        drops.push(new BossExpDrop(this.centerX, this.centerY, Math.floor(playerStats.xpNeeded * 4 + 1000)));
         
         if (typeof bgmSystem !== 'undefined') {
             bgmSystem.stop(); // 戛然而止

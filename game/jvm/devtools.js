@@ -1,6 +1,8 @@
 // ================= Cheat Menu 秘籍监控 =================
 let konamiCode = "leumcdevopen";
 let konamiIndex = 0;
+let debugCode = "debugon";
+let debugIndex = 0;
 window.addEventListener('keydown', (e) => {
     if (e.key === konamiCode[konamiIndex]) {
         konamiIndex++;
@@ -11,6 +13,20 @@ window.addEventListener('keydown', (e) => {
     } else {
         konamiIndex = 0;
         if (e.key === konamiCode[0]) konamiIndex = 1;
+    }
+
+    if (e.key === debugCode[debugIndex]) {
+        debugIndex++;
+        if (debugIndex === debugCode.length) {
+            playerStats.maxLives = 99999999;
+            lives = playerStats.maxLives;
+            if (typeof updateLivesDisplay === 'function') updateLivesDisplay();
+            if (typeof createPopupInfo === 'function') createPopupInfo(playerX, playerY, 'DEBUG MODE ON', 'buff-explosion');
+            debugIndex = 0;
+        }
+    } else {
+        debugIndex = 0;
+        if (e.key === debugCode[0]) debugIndex = 1;
     }
 });
 
@@ -38,6 +54,11 @@ function showCheatPage(id) {
         document.getElementById('cs-maxshield').value = playerStats.maxShield;
         document.getElementById('cs-crit').value = playerStats.critRate;
         document.getElementById('cs-spd').value = playerStats.bulletSpeed;
+        document.getElementById('cs-multishot').value = playerStats.multiShot;
+        document.getElementById('cs-firerate').value = playerStats.fireRateModifier;
+        document.getElementById('cs-pierce').value = playerStats.pierce;
+        document.getElementById('cs-fp').value = playerStats.firepowerPoints || 0;
+        document.getElementById('cs-ammo').value = playerStats.maxAmmo;
     } else if (id === 'cheat-upg-menu') {
         initCheatUpgrades();
     } else if (id === 'cheat-mob-menu') {
@@ -55,6 +76,11 @@ function applyCheatStats() {
     playerStats.maxShield = parseInt(document.getElementById('cs-maxshield').value) || 0;
     playerStats.critRate = parseFloat(document.getElementById('cs-crit').value) || 0;
     playerStats.bulletSpeed = parseInt(document.getElementById('cs-spd').value) || 8;
+    playerStats.multiShot = parseInt(document.getElementById('cs-multishot').value) || 1;
+    playerStats.fireRateModifier = parseFloat(document.getElementById('cs-firerate').value) || 1.0;
+    playerStats.pierce = parseInt(document.getElementById('cs-pierce').value) || 0;
+    playerStats.firepowerPoints = parseInt(document.getElementById('cs-fp').value) || 0;
+    playerStats.maxAmmo = parseInt(document.getElementById('cs-ammo').value) || 30;
     lives = playerStats.maxLives;
     playerStats.shield = playerStats.maxShield;
     updateLivesDisplay();
@@ -136,6 +162,8 @@ function cheatGrantUpgrade(id) {
         case 'crit': playerStats.critRate += 0.15; break;
         case 'critDamage': playerStats.critDamageMult += 1.0; break;
         case 'execute': playerStats.executeChance += 0.05; break;
+        case 'homing': playerStats.homingCount = (playerStats.homingCount||0) + 1; break;
+        case 'aoe': playerStats.aoeRadius = playerStats.aoeRadius ? playerStats.aoeRadius + 40 : 120; break;
         case 'heal': healPlayer(15); break;
         case 'maxLifeUp': playerStats.maxLives += 20; healPlayer(playerStats.maxLives); break;
         case 'shieldMaxUp': playerStats.maxShield += 10; playerStats.shield += 10; updateShieldDisplay(); break;
@@ -163,6 +191,8 @@ function cheatGrantAdvUpgrade(id) {
         case 'crit': playerStats.critRate = 1.0; playerStats.critDamageMult += 2.0; break;
         case 'critDamage': playerStats.critDamageMult += 15.0; break;
         case 'execute': playerStats.executeChance = 0.50; break;
+        case 'homing': playerStats.homingCount *= 2; playerStats.homingPierce = 3; break;
+        case 'aoe': playerStats.aoeRadius = 1500; playerStats.aoeDamageMult *= 2; break;
         case 'maxLifeUp': playerStats.maxLives += 400; healPlayer(playerStats.maxLives); break;
         case 'shieldMaxUp': playerStats.maxShield += 300; playerStats.shield += 300; updateShieldDisplay(); break;
         case 'dodgeRate': playerStats.dodgeRate = 0.80; break;

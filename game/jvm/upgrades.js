@@ -2,6 +2,8 @@ const advancedUpgradeTitles = {
     crit: '绝对真理',
     critDamage: '维度打击',
     execute: 'SIGKILL (秒杀)',
+    homing: '万物归环',
+    aoe: '全域内存湮灭',
     maxLifeUp: '分布式冗余',
     shieldMaxUp: '绝对沙箱',
     dodgeRate: '薛定谔的代码',
@@ -30,6 +32,11 @@ function getUpgradePool(playerStats, healCallback) {
         // ============ 1. 核心火力体系 ============
 
         // ============ 2. 暴击爆发体系 ============
+        
+        // ============ 3. 全新打击流派 ============
+        { id: 'homing', cap: 5, title: opts.homing.title, desc: opts.homing.desc, apply: () => { playerStats.homingCount = (playerStats.homingCount||0) + 1; track('homing'); } },
+        { id: 'aoe', cap: 5, title: opts.aoe.title, desc: opts.aoe.desc, apply: () => { playerStats.aoeRadius = playerStats.aoeRadius ? playerStats.aoeRadius + 40 : 120; track('aoe'); } },
+        
         { id: 'crit', cap: 5, title: opts.crit.title, desc: opts.crit.desc, apply: () => { playerStats.critRate += 0.15; track('crit'); } },
         { id: 'critDamage', cap: 5, title: opts.critDamage.title, desc: opts.critDamage.desc, apply: () => { playerStats.critDamageMult += 1.0; track('critDamage'); } },
         { id: 'execute', cap: 3, title: opts.execute.title, desc: opts.execute.desc, apply: () => { playerStats.executeChance += 0.05; track('execute'); } },
@@ -59,6 +66,8 @@ function getUpgradePool(playerStats, healCallback) {
         crit: { title: advancedUpgradeTitles.crit, desc: '暴击率变为 100%，额外暴击倍率 +2.0x', apply: () => { playerStats.critRate -= 0.15 * 5; playerStats.critRate = 1.0; playerStats.critDamageMult += 2.0; trackAdv('crit'); } },
         critDamage: { title: advancedUpgradeTitles.critDamage, desc: '暴击伤害倍率极大幅度提升 (+15.0x)', apply: () => { playerStats.critDamageMult -= 1.0 * 5; playerStats.critDamageMult += 15.0; trackAdv('critDamage'); } },
         execute: { title: advancedUpgradeTitles.execute, desc: '秒杀概率升至 50%', apply: () => { playerStats.executeChance -= 0.05 * 3; playerStats.executeChance += 0.50; trackAdv('execute'); } },
+        homing: { title: advancedUpgradeTitles.homing, desc: '追踪弹数量翻倍，射速翻倍，并获得穿甲能力', apply: () => { playerStats.homingCount *= 2; playerStats.homingPierce = 3; trackAdv('homing'); } },
+        aoe: { title: advancedUpgradeTitles.aoe, desc: '范围激增至全屏级别，伤害倍率翻倍', apply: () => { playerStats.aoeRadius = 1500; playerStats.aoeDamageMult *= 2; trackAdv('aoe'); } },
         maxLifeUp: { title: advancedUpgradeTitles.maxLifeUp, desc: '负载上限提升 400 点并瞬间回满', apply: () => { playerStats.maxLives -= 20 * 5; playerStats.maxLives += 400; healCallback(playerStats.maxLives); trackAdv('maxLifeUp'); } },
         shieldMaxUp: { title: advancedUpgradeTitles.shieldMaxUp, desc: '护盾上限增加 300，并获得等量护盾', apply: () => { playerStats.maxShield -= 10 * 5; playerStats.maxShield += 300; playerStats.shield += 300; if (typeof updateShieldDisplay === 'function') updateShieldDisplay(); trackAdv('shieldMaxUp'); } },
         dodgeRate: { title: advancedUpgradeTitles.dodgeRate, desc: '获得 80% 的绝对闪避概率', apply: () => { playerStats.dodgeRate -= 0.10 * 5; playerStats.dodgeRate += 0.80; trackAdv('dodgeRate'); } },

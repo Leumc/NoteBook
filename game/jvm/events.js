@@ -98,12 +98,12 @@ function triggerEventB() {
 
 // 导出事件供开发者工具调用
 const gameEventsList = [
-    { id: 'A', name: 'Fast Rush', fn: triggerEventA },
-    { id: 'B', name: 'Tank Wall', fn: triggerEventB },
-    { id: 'C', name: 'Right Sniper', fn: triggerEventC },
-    { id: 'D', name: 'Left Sniper', fn: triggerEventD },
-    { id: 'E', name: 'Tanks Fall', fn: triggerEventE },
-    { id: 'F', name: 'Spawners', fn: triggerEventF }
+    { id: 'A', name: '高频快冲 (Fast Rush)', fn: triggerEventA },
+    { id: 'B', name: '阻塞防线 (Tank Wall)', fn: triggerEventB },
+    { id: 'C', name: '右侧狙击 (Right Sniper)', fn: triggerEventC },
+    { id: 'D', name: '左侧狙击 (Left Sniper)', fn: triggerEventD },
+    { id: 'E', name: '内存坠落 (Tanks Fall)', fn: triggerEventE },
+    { id: 'F', name: '生成工厂 (Spawners)', fn: triggerEventF }
 ];
 
 // c:在右侧从上到下依次生成侧向的发射子弹的怪

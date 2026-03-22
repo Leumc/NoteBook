@@ -75,7 +75,8 @@ function switchManualTab(tabName, btnElement) {
             lifeSteal: '吸血概率及吸血量巨幅增加', slowAura: '全局代码块移动速度极速降低 (减速 75%)', knockback: '异常击中代码块时发生强制极远击退',
             stunChance: '死锁概率极大提升，时长巨幅延长', bulletSize: '抛出的异常体积超级巨大化，且附带额外伤害', xpGainUp: '经验获取倍率提升至 500%',
             focusedFire: '多弹道不再散射，变为完全同向的收束激光', ammoCapUp: '弹夹容量极大提升 (+100)', reloadSpeedUp: '换弹时间极度压缩 (-60%)',
-            pickupRangeUp: '代码碎片拾取范围变为全屏无限'
+            pickupRangeUp: '代码碎片拾取范围变为全屏无限', homing: '追踪弹数量翻倍，射速极度加快，并获得穿甲能力',
+            aoe: '全域内存湮灭波，范围激增至全屏级别，伤害倍率激增'
         };
 
         const renderUpgradeCard = (k) => {

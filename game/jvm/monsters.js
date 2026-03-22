@@ -110,7 +110,8 @@ class CodeBlock {
         this.isSide = def.isSide || false;
         this.maxHp = (typeof forceType === 'object' && forceType !== null) ? Math.floor(def.hp) : Math.floor(def.hp * Math.pow(1.20, currentLevel - 1));
         this.hp = this.maxHp;
-        this.xpValue = def.xp;
+        // 修复：添加 (def.xp || 1) 保底防护，防止某些特殊构造体缺失 xp 属性导致 NaN 污染
+        this.xpValue = Math.floor((def.xp || 1) * Math.pow(1.03, currentLevel - 1));
 
         // 核心修改：动态获取当前语言的代码和错误文本
         const texts = monsterTexts[currentLang];

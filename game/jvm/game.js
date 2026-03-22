@@ -3,6 +3,7 @@ const scoreElement = document.getElementById('score');
 const livesElement = document.getElementById('lives');
 const levelDisplay = document.getElementById('level-display');
 const xpBar = document.getElementById('xp-bar');
+const xpText = document.getElementById('xp-text');
 
 const startScreen = document.getElementById('start-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
@@ -252,6 +253,8 @@ const langConfig = {
             crit: { title: '反射暴击', desc: '15% 概率触发暴击' },
             critDamage: { title: '重度崩溃', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'System.exit(1)', desc: '5% 概率直接秒杀普通代码块' },
+            homing: { title: 'CompletableFuture 异步', desc: '增加每2秒发射的自动追踪异步异常 (+1)' },
+            aoe: { title: 'Parallel GC 回收', desc: '扩大周期性释放的垃圾回收冲击波范围' },
             heal: { title: 'GC 回收', desc: '恢复 15 点系统负载' },
             maxLifeUp: { title: '增加堆内存', desc: '负载上限 +20 并回满' },
             shieldMaxUp: { title: '安全沙箱', desc: '护盾上限 +10 并获得等量护盾' },
@@ -288,6 +291,8 @@ const langConfig = {
             crit: { title: '元类黑魔法', desc: '15% 概率触发暴击' },
             critDamage: { title: '深层 Traceback', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'os._exit()', desc: '5% 概率直接秒杀普通代码块' },
+            homing: { title: 'asyncio 协程', desc: '增加每2秒发射的自动追踪异步任务 (+1)' },
+            aoe: { title: 'ob_refcnt 归零脉冲', desc: '扩大周期性释放的引用计数清零冲击波范围' },
             heal: { title: 'gc.collect()', desc: '恢复 15 点系统负载' },
             maxLifeUp: { title: '放宽递归限制', desc: '负载上限 +20 并回满' },
             shieldMaxUp: { title: '虚拟环境', desc: '护盾上限 +10 并获得等量护盾' },
@@ -324,6 +329,8 @@ const langConfig = {
             crit: { title: '野指针强转', desc: '15% 概率触发暴击' },
             critDamage: { title: '未定义行为 (UB)', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'std::abort()', desc: '5% 概率直接秒杀普通代码块' },
+            homing: { title: '智能指针', desc: '增加每2秒发射的自动追踪智能指针数量 (+1)' },
+            aoe: { title: '内存池刷新', desc: '扩大周期性释放的内存刷新波范围' },
             heal: { title: 'delete 释放', desc: '恢复 15 点系统负载' },
             maxLifeUp: { title: '扩大虚拟内存', desc: '负载上限 +20 并回满' },
             shieldMaxUp: { title: '内存保护', desc: '护盾上限 +10 并获得等量护盾' },
@@ -401,25 +408,62 @@ langSelector.addEventListener('change', (e) => {
 // 初始化时执行一次
 updateLanguageUI();
 
+function selectInitLang(lang) {
+    currentLang = lang;
+    document.getElementById('lang-selector').value = lang;
+    updateLanguageUI();
+    document.getElementById('init-lang-screen').style.display = 'none';
+}
+
+// ================= DOM 对象池 (优化渲染与垃圾回收) =================
+const ElementPool = {
+    pools: {},
+    get(type, createFunc) {
+        if (!this.pools[type]) this.pools[type] = [];
+        let el = this.pools[type].length > 0 ? this.pools[type].pop() : createFunc();
+        el.style.display = '';
+        return el;
+    },
+    release(type, el) {
+        el.style.display = 'none';
+        if (!this.pools[type]) this.pools[type] = [];
+        this.pools[type].push(el);
+    }
+};
+let bulletSizeCache = null;
+let enemyBulletSizeCache = null;
+
 class Bullet {
     constructor(startX, startY, angleDeg) {
-        this.element = document.createElement('div');
-        this.element.className = 'bullet';
-        this.element.textContent = langConfig[currentLang].bullet; // 动态读取
+        this.element = ElementPool.get('bullet', () => {
+            let el = document.createElement('div');
+            el.className = 'bullet';
+            container.appendChild(el);
+            return el;
+        });
+        this.element.textContent = langConfig[currentLang].bullet;
 
         if (playerStats.bulletSizeMult > 1.0) {
             this.element.style.fontSize = `${12 * playerStats.bulletSizeMult}px`;
+        } else {
+            this.element.style.fontSize = ''; // 重置字体大小
         }
-        container.appendChild(this.element);
-        const rect = this.element.getBoundingClientRect();
-        this.width = rect.width; this.height = rect.height;
+
+        // 缓存以消除强制重排 (Reflow) 带来的严重性能开销
+        if (!bulletSizeCache || bulletSizeCache.mult !== playerStats.bulletSizeMult || bulletSizeCache.lang !== currentLang) {
+            const rect = this.element.getBoundingClientRect();
+            bulletSizeCache = { w: rect.width, h: rect.height, mult: playerStats.bulletSizeMult, lang: currentLang };
+        }
+        this.width = bulletSizeCache.w; this.height = bulletSizeCache.h;
 
         this.x = startX - (this.width / 2);
         this.y = startY - 13 - this.height;
         this.angleDeg = angleDeg;
 
         this.pierceLeft = playerStats.pierce;
-        this.hitSet = new Set();
+        // 清理复用时的历史记录
+        if (!this.hitSet) this.hitSet = new Set();
+        else this.hitSet.clear();
 
         const angleRad = angleDeg * (Math.PI / 180);
         this.speedY = Math.cos(angleRad) * playerStats.bulletSpeed;
@@ -434,19 +478,100 @@ class Bullet {
     }
     remove() { 
         const el = this.element;
-        setTimeout(() => el.remove(), 50); // 延迟 50ms 移除，让贴脸子弹有视觉驻留时间
+        setTimeout(() => ElementPool.release('bullet', el), 50); 
     }
+}
+
+class HomingBullet {
+    constructor(startX, startY, initialAngle) {
+        this.element = ElementPool.get('homingBullet', () => {
+            let el = document.createElement('div');
+            el.className = 'bullet homing-bullet';
+            container.appendChild(el);
+            return el;
+        });
+        this.element.textContent = '=>';
+        
+        this.width = 15 * playerStats.bulletSizeMult; 
+        this.height = 15 * playerStats.bulletSizeMult;
+        if (playerStats.bulletSizeMult > 1.0) {
+            this.element.style.fontSize = `${14 * playerStats.bulletSizeMult}px`;
+        } else {
+            this.element.style.fontSize = ''; 
+        }
+        
+        // 【修复】加入随机位置偏移，打乱完全重合的初始生成坐标
+        this.x = startX - (this.width / 2) + (Math.random() - 0.5) * 30; 
+        this.y = startY - 13 - this.height + (Math.random() - 0.5) * 15;
+        
+        // 【修复】随机化各子弹的初速度和空气动力学转向率，打散飞行同步制导
+        this.speed = playerStats.bulletSpeed * (0.6 + Math.random() * 0.4);
+        this.turnSpeed = 0.02 + Math.random() * 0.05; 
+        let angleRad = initialAngle * (Math.PI / 180);
+        this.speedX = Math.sin(angleRad) * this.speed;
+        this.speedY = Math.cos(angleRad) * this.speed; // 正数代表向上
+        
+        this.pierceLeft = (playerStats.homingPierce || 0) + playerStats.pierce; // 继承系统穿透力
+        if (!this.hitSet) this.hitSet = new Set(); else this.hitSet.clear();
+        this.angleDeg = initialAngle;
+        this.lifespan = 300; // 5秒存活时间 (假设 60fps)
+        this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0) rotate(${this.angleDeg - 90}deg)`;
+    }
+    update() {
+        this.lifespan--;
+        if (this.lifespan <= 0) { this.remove(); return false; }
+
+        if (codeBlocks.length > 0) {
+            let nearest = null; let minDist = Infinity;
+            for(let c of codeBlocks) {
+                if (c.y < 120 || c.isSide || this.hitSet.has(c)) continue; // 核心修复：排除已穿透/击中的怪
+                let d = Math.hypot((c.x+c.width/2)-this.x, (c.y+c.height/2)-this.y);
+                if(d < minDist) { minDist = d; nearest = c; }
+            }
+            if (!nearest) nearest = codeBlocks.find(c => !c.isSide && !this.hitSet.has(c));
+            if (nearest) {
+                let dx = (nearest.x+nearest.width/2) - this.x; let dy = (nearest.y+nearest.height/2) - this.y;
+                let dist = Math.hypot(dx, dy);
+                if (dist > 0) {
+                    let desiredX = (dx / dist) * this.speed;
+                    let desiredY = -(dy / dist) * this.speed;
+                    // 【修复】使用乱序后的独立转弯率，形成漫天飞舞的流星弧线
+                    this.speedX += (desiredX - this.speedX) * this.turnSpeed; 
+                    this.speedY += (desiredY - this.speedY) * this.turnSpeed;
+                    this.angleDeg = Math.atan2(this.speedX, this.speedY) * (180/Math.PI);
+                }
+            }
+        }
+        this.x += this.speedX; this.y -= this.speedY;
+        this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0) rotate(${this.angleDeg - 90}deg)`;
+        if (this.y < 0 || this.y > window.innerHeight || this.x < 0 || this.x > window.innerWidth) { this.remove(); return false; }
+        return true;
+    }
+    remove() { const el = this.element; setTimeout(() => ElementPool.release('homingBullet', el), 50); }
 }
 
 class EnemyBullet {
     constructor(startX, startY, targetX, targetY, textOverride = null) {
-        this.element = document.createElement('div');
-        this.element.className = 'enemy-bullet';
+        this.element = ElementPool.get('enemyBullet', () => {
+            let el = document.createElement('div');
+            el.className = 'enemy-bullet';
+            container.appendChild(el);
+            return el;
+        });
         this.element.textContent = textOverride || langConfig[currentLang].enemyBullet;
-        container.appendChild(this.element);
 
-        const rect = this.element.getBoundingClientRect();
-        this.width = rect.width; this.height = rect.height;
+        if (!textOverride && (!enemyBulletSizeCache || enemyBulletSizeCache.lang !== currentLang)) {
+            const rect = this.element.getBoundingClientRect();
+            enemyBulletSizeCache = { w: rect.width, h: rect.height, lang: currentLang };
+        }
+
+        if (textOverride) {
+            const rect = this.element.getBoundingClientRect();
+            this.width = rect.width; this.height = rect.height;
+        } else {
+            this.width = enemyBulletSizeCache.w; this.height = enemyBulletSizeCache.h;
+        }
+
         this.x = startX - (this.width / 2);
         this.y = startY;
 
@@ -469,20 +594,23 @@ class EnemyBullet {
     }
     remove() { 
         const el = this.element;
-        setTimeout(() => el.remove(), 50); // 同样增加微小延迟
+        setTimeout(() => ElementPool.release('enemyBullet', el), 50); 
     }
 }
 
 class ExpDrop {
     constructor(x, y, value) {
         this.x = x; this.y = y; this.value = value;
-        this.element = document.createElement('div');
-        this.element.className = 'exp-drop';
+        this.element = ElementPool.get('expDrop', () => {
+            let el = document.createElement('div');
+            el.className = 'exp-drop';
+            container.appendChild(el);
+            return el;
+        });
         this.element.textContent = Math.random() < 0.5 ? '0' : '1';
         this.x += (Math.random() - 0.5) * 40;
         this.y += (Math.random() - 0.5) * 40;
         this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
-        container.appendChild(this.element);
     }
     update(globalSpeedMult) {
         let dx = playerX - this.x;
@@ -501,40 +629,100 @@ class ExpDrop {
         this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
         return true;
     }
-    remove() { this.element.remove(); }
+    remove() { ElementPool.release('expDrop', this.element); }
+}
+
+class BossExpDrop {
+    constructor(x, y, value) {
+        this.x = x; this.y = y; this.value = value;
+        this.element = ElementPool.get('bossExpDrop', () => {
+            let el = document.createElement('div');
+            el.className = 'boss-exp-drop';
+            let inner = document.createElement('div');
+            inner.className = 'boss-exp-inner';
+            inner.textContent = '[ CORE_DUMP ]';
+            el.appendChild(inner);
+            container.appendChild(el);
+            return el;
+        });
+        this.x += (Math.random() - 0.5) * 40;
+        this.y += (Math.random() - 0.5) * 40;
+        this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
+    }
+    update(globalSpeedMult) {
+        let dx = playerX - (this.x + 18);
+        let dy = playerY - (this.y + 18);
+        let dist = Math.hypot(dx, dy);
+        if (dist < playerStats.pickupRange) {
+            let speed = 15 * globalSpeedMult;
+            if (dist < speed) {
+                this.remove(); 
+                showDamageText(playerX, playerY - 40, `+${this.value} XP`, 'crit');
+                gainXp(this.value); 
+                return false;
+            }
+            this.x += (dx / dist) * speed; this.y += (dy / dist) * speed;
+        } else {
+            this.y += 0.3 * globalSpeedMult; 
+            if (this.y > window.innerHeight) { this.remove(); return false; }
+        }
+        this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0)`;
+        return true;
+    }
+    remove() { ElementPool.release('bossExpDrop', this.element); }
 }
 
 function showDamageText(x, y, amount, type) {
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'absolute';
-    const scatterX = (Math.random() - 0.5) * 30;
-    wrapper.style.transform = `translate3d(${x + scatterX}px, ${y}px, 0)`;
-    wrapper.style.zIndex = '100';
+    const wrapper = ElementPool.get('damageText', () => {
+        let el = document.createElement('div');
+        el.style.position = 'absolute';
+        el.style.zIndex = '100';
+        let txt = document.createElement('div');
+        el.appendChild(txt);
+        container.appendChild(el);
+        txt.addEventListener('animationend', () => ElementPool.release('damageText', el));
+        return el;
+    });
 
-    const txt = document.createElement('div');
+    const txt = wrapper.firstChild;
     txt.className = `damage-text damage-${type}`;
     txt.textContent = type === 'player' ? `-${amount}` : amount;
+    
+    // 重置动画使其重新播放
+    txt.style.animation = 'none';
+    void txt.offsetWidth;
+    txt.style.animation = null;
 
-    wrapper.appendChild(txt); container.appendChild(wrapper);
-    txt.addEventListener('animationend', () => wrapper.remove());
+    const scatterX = (Math.random() - 0.5) * 30;
+    wrapper.style.transform = `translate3d(${x + scatterX}px, ${y}px, 0)`;
 }
 
 function createPopupInfo(x, y, message, cssClass, isCrit = false) {
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'absolute';
-    wrapper.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    wrapper.style.zIndex = '25';
-    wrapper.style.pointerEvents = 'none';
+    const wrapper = ElementPool.get('popupInfo', () => {
+        let el = document.createElement('div');
+        el.style.position = 'absolute';
+        el.style.zIndex = '25';
+        el.style.pointerEvents = 'none';
+        let exp = document.createElement('div');
+        el.appendChild(exp);
+        container.appendChild(el);
+        exp.addEventListener('animationend', () => ElementPool.release('popupInfo', el));
+        return el;
+    });
 
-    const exp = document.createElement('div');
+    const exp = wrapper.firstChild;
     let finalClass = cssClass;
     if (isCrit) finalClass += ' crit-explosion';
 
     exp.className = finalClass;
     exp.textContent = isCrit ? '[FATAL CRIT] ' + message : message;
 
-    wrapper.appendChild(exp); container.appendChild(wrapper);
-    exp.addEventListener('animationend', () => wrapper.remove());
+    // 重置动画使其重新播放
+    exp.style.animation = 'none';
+    void exp.offsetWidth;
+    exp.style.animation = null;
+
+    wrapper.style.transform = `translate3d(${x}px, ${y}px, 0)`;
 }
 
 function updateEventTimerUI(ms) {
@@ -636,6 +824,7 @@ function healPlayer(amount) {
 }
 
 function gainXp(amount) {
+    if (isNaN(amount) || amount <= 0) return; // 致命错误拦截，防止系统经验池被 NaN 污染
     amount = amount * playerStats.xpMult;
     playerStats.xp += amount;
     let levelUps = 0;
@@ -647,9 +836,13 @@ function gainXp(amount) {
     }
     if (levelUps > 0) {
         levelDisplay.textContent = playerStats.level;
-        triggerLevelUp(levelUps);
+        pendingLevelUps += levelUps;
+        if (gameState === 'PLAYING') {
+            triggerLevelUp();
+        }
     }
     xpBar.style.width = `${(playerStats.xp / playerStats.xpNeeded) * 100}%`;
+    if (xpText) xpText.textContent = `${Math.floor(playerStats.xp)} / ${playerStats.xpNeeded}`;
 }
 
 let pendingFp = 0;
@@ -657,6 +850,7 @@ let pendingAlloc = {};
 let selectedUpgOpt = null;
 let currentRefreshCost = 5;
 let currentHealCost = 10;
+let pendingLevelUps = 0; // 升级队列计数器
 
 const fpCosts = {
     multiShot: 8,
@@ -666,12 +860,12 @@ const fpCosts = {
     pierce: 6
 };
 
-function triggerLevelUp(levels = 1) {
+function triggerLevelUp() {
     container.classList.remove('hide-cursor');
     playSound('level_up');
     gameState = 'PAUSED';
     
-    playerStats.firepowerPoints = (playerStats.firepowerPoints || 0) + (4 * levels);
+    playerStats.firepowerPoints = (playerStats.firepowerPoints || 0) + 4; // 每次弹窗只发4点当前层级的FP
     pendingFp = playerStats.firepowerPoints;
     pendingAlloc = { multiShot: 0, fireRate: 0, damageUp: 0, bulletSpeed: 0, pierce: 0 };
     selectedUpgOpt = null;
@@ -681,6 +875,10 @@ function triggerLevelUp(levels = 1) {
     const pool = getUpgradePool(playerStats, healPlayer);
     const shuffled = [...pool].sort(() => 0.5 - Math.random());
     const options = shuffled.slice(0, 4);
+
+    const baseTitle = langConfig[currentLang].levelUpTitle;
+    let remainingText = pendingLevelUps > 1 ? `<br><span style="font-size:18px; color:var(--warning-color);">[ 连续跃升！剩余 ${pendingLevelUps - 1} 次优化待选择 ]</span>` : '';
+    document.getElementById('level-up-title').innerHTML = baseTitle + remainingText;
 
     renderLevelUpUI(options);
     levelUpScreen.style.display = 'flex';
@@ -693,7 +891,7 @@ function renderLevelUpUI(options) {
     
     confirmBtn.onclick = () => {
         if (!selectedUpgOpt) {
-            playerStats.firepowerPoints = pendingFp + 4;
+            playerStats.firepowerPoints = pendingFp + 4; // 跳过给额外点数
         } else {
             playerStats.firepowerPoints = pendingFp;
         }
@@ -713,12 +911,17 @@ function renderLevelUpUI(options) {
             selectedUpgOpt.apply();
         }
         
-        levelUpScreen.style.display = 'none';
-        gameState = 'PLAYING';
-        container.classList.add('hide-cursor');
-        isPointerDown = false;
-        lastFrameTime = performance.now(); // 防止恢复游戏后由于 dt 突增引发异常计算
-        requestAnimationFrame(gameLoop);
+        pendingLevelUps--;
+        if (pendingLevelUps > 0) {
+            triggerLevelUp(); // 消耗一次后，如果还有排队的升级，马上再弹下一次
+        } else {
+            levelUpScreen.style.display = 'none';
+            gameState = 'PLAYING';
+            container.classList.add('hide-cursor');
+            isPointerDown = false;
+            lastFrameTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
     };
 
     const btnRefresh = document.getElementById('btn-refresh');
@@ -1006,6 +1209,50 @@ function checkCollisions() {
     }
 }
 
+function triggerAoEBurst() {
+    playSound('explode');
+    let actualRadius = playerStats.aoeRadius * playerStats.bulletSizeMult;
+    const wave = document.createElement('div');
+    wave.className = 'aoe-wave';
+    wave.style.width = (actualRadius * 2) + 'px';
+    wave.style.height = (actualRadius * 2) + 'px';
+    wave.style.left = (playerX - actualRadius) + 'px';
+    wave.style.top = (playerY - actualRadius) + 'px';
+    container.appendChild(wave);
+    setTimeout(() => wave.remove(), 600);
+
+    for (let i = codeBlocks.length - 1; i >= 0; i--) {
+        let c = codeBlocks[i];
+        let d = Math.hypot((c.x+c.width/2)-playerX, (c.y+c.height/2)-playerY);
+        if (d <= actualRadius + c.width / 2) { // 增加包围盒冗余判定
+            let isCrit = Math.random() < playerStats.critRate;
+            let dmg = playerStats.damage * playerStats.aoeDamageMult;
+            if (isCrit) dmg *= playerStats.critDamageMult;
+            if (Math.random() < playerStats.executeChance && c.isBase) dmg = c.maxHp; 
+            
+            showDamageText(c.x + c.width / 2, c.y, Math.floor(dmg), isCrit ? 'crit' : 'normal');
+            
+            if (c.takeDamage(dmg)) {
+                const cx = c.x; const cy = c.y; const err = c.errorText; const xpVal = c.xpValue; const type = c.type;
+                score++; scoreElement.textContent = score;
+                c.remove(); codeBlocks.splice(i, 1);
+                
+                if (Math.random() < playerStats.lifeStealRate) healPlayer(playerStats.lifeStealAmount);
+                if (type === 'gc_heal') { healPlayer(15); createPopupInfo(cx, cy, err, 'buff-explosion'); } 
+                else if (type === 'gc_slow') { stopTheWorldTimer = 300; createPopupInfo(cx, cy, err, 'buff-explosion buff-slow-explosion'); } 
+                else { createPopupInfo(cx, cy, err, 'error-explosion', isCrit); }
+                drops.push(new ExpDrop(cx, cy, xpVal));
+            } else {
+                // 未死亡则附带特效
+                if (Math.random() < playerStats.stunChance) c.stunTimer = playerStats.stunDuration;
+                if (playerStats.knockbackDist > 0 && !c.isSide) {
+                    let prevY = c.y; c.y -= playerStats.knockbackDist; if (prevY >= 120 && c.y < 120) c.y = 120;
+                }
+            }
+        }
+    }
+}
+
 function gameLoop(timestamp) {
     if (!timestamp) timestamp = performance.now();
     let dt = timestamp - lastFrameTime;
@@ -1047,6 +1294,31 @@ function gameLoop(timestamp) {
             else if (r < 0.40) forceType = 'gc_slow';
             codeBlocks.push(new CodeBlock(container, playerStats.level, forceType));
             bossMobTimer = 1500; // 恒定 1.5 秒生成怪物
+        }
+    }
+
+    // 新增：自动攻击与脉冲逻辑判定
+    if (playerStats.homingCount > 0) {
+        if (window.homingTimer === undefined) window.homingTimer = 0;
+        window.homingTimer -= dt;
+        if (window.homingTimer <= 0) {
+            window.homingTimer = (playerStats.homingPierce > 0 ? 1000 : 2000) * playerStats.fireRateModifier; 
+            let totalHoming = playerStats.homingCount * playerStats.multiShot; // 继承多重射击
+            let baseSpread = 35; // 加大初始抛射的扇形散布角度
+            let startAngle = -baseSpread * (totalHoming - 1) / 2;
+            for(let i = 0; i < totalHoming; i++) {
+                // 抛射时加入轻微的角度扰动
+                let angle = startAngle + (baseSpread * i) + (Math.random() - 0.5) * 15;
+                bullets.push(new HomingBullet(playerX, playerY, angle));
+            }
+        }
+    }
+    if (playerStats.aoeRadius > 0) {
+        if (window.aoeTimer === undefined) window.aoeTimer = 0;
+        window.aoeTimer -= dt;
+        if (window.aoeTimer <= 0) {
+            window.aoeTimer = 3000 * playerStats.fireRateModifier; // 继承射击频率
+            triggerAoEBurst();
         }
     }
 
@@ -1108,6 +1380,12 @@ function startGame() {
     lastFrameTime = performance.now();
     bossMobTimer = 0;
     window.bossPhase2 = false;
+    
+    playerStats.homingCount = 0;
+    playerStats.aoeRadius = 0;
+    playerStats.homingPierce = 0;
+    playerStats.aoeDamageMult = 3.0;
+    window.homingTimer = 0; window.aoeTimer = 0;
 
     playerStats.level = 1; playerStats.xp = 0; playerStats.xpNeeded = 20;
     playerStats.fireRateModifier = 1.0; playerStats.damage = 1;
@@ -1121,6 +1399,7 @@ function startGame() {
     playerStats.maxAmmo = 30; playerStats.reloadSpeedModifier = 1.0;
     playerStats.upgrades = {}; playerStats.advanced = {};
     playerStats.firepowerPoints = 0;
+    pendingLevelUps = 0;
     lives = 200;
     currentAmmo = 30; isReloading = false; reloadTimer = 0; maxReloadTimer = 0;
     
@@ -1129,6 +1408,7 @@ function startGame() {
 
     scoreElement.textContent = score; updateLivesDisplay(); updateShieldDisplay(); levelDisplay.textContent = playerStats.level;
     xpBar.style.width = '0%';
+    if (xpText) xpText.textContent = `0 / ${playerStats.xpNeeded}`;
     container.style.filter = '';
 
     langSelector.style.display = 'none'; // 游戏开始隐藏选择器
@@ -1142,8 +1422,12 @@ function startGame() {
 
     codeBlocks.forEach(b => b.remove()); bullets.forEach(b => b.remove()); enemyBullets.forEach(b => b.remove());
     drops.forEach(d => d.remove()); drops = [];
-    document.querySelectorAll('.error-explosion, .buff-explosion, .damage-text').forEach(e => e.remove());
-    document.querySelectorAll('div[style*="z-index"]').forEach(e => { if (e.style.zIndex == '25' || e.style.zIndex == '100') e.remove(); });
+    document.querySelectorAll('.damage-text, .error-explosion, .buff-explosion').forEach(e => {
+        if (e.parentElement && e.parentElement.style.zIndex) {
+            if (e.parentElement.style.zIndex == '100') ElementPool.release('damageText', e.parentElement);
+            if (e.parentElement.style.zIndex == '25') ElementPool.release('popupInfo', e.parentElement);
+        }
+    });
     codeBlocks = []; bullets = []; enemyBullets = []; isPointerDown = false;
 
     handlePlayerMove(window.innerWidth / 2, window.innerHeight - 80);
@@ -1237,6 +1521,12 @@ function returnToMenu() {
     bullets.forEach(b => b.remove()); bullets = [];
     enemyBullets.forEach(b => b.remove()); enemyBullets = [];
     drops.forEach(d => d.remove()); drops = [];
+    document.querySelectorAll('.damage-text, .error-explosion, .buff-explosion').forEach(e => {
+        if (e.parentElement && e.parentElement.style.zIndex) {
+            if (e.parentElement.style.zIndex == '100') ElementPool.release('damageText', e.parentElement);
+            if (e.parentElement.style.zIndex == '25') ElementPool.release('popupInfo', e.parentElement);
+        }
+    });
 }
 
 function endGame() {
