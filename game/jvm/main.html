@@ -181,13 +181,13 @@
                 <button class="action-btn" onclick="showCheatPage('cheat-event-menu')">Trigger Event</button>
                 <button class="action-btn" onclick="showCheatPage('cheat-upg-menu')">Obtain Upgrades</button>
                 <button class="action-btn" onclick="showCheatPage('cheat-stat-menu')">Edit Stats</button>
-                <button class="action-btn" onclick="document.getElementById('cheat-menu').style.display='none'"
+                <button class="action-btn" onclick="closeCheatMenu()"
                     style="border-color: #ff4d4d; color: #ff4d4d;">Close</button>
             </div>
 
             <div id="cheat-boss-menu" class="cheat-page" style="display:none;">
                 <button class="action-btn"
-                    onclick="if(!activeBoss) { boss1Spawned = true; spawnBoss1(); document.getElementById('cheat-menu').style.display='none'; }">Boss
+                    onclick="if(!activeBoss) { boss1Spawned = true; spawnBoss1(); closeCheatMenu(); }">Boss
                     OOM-Reaper</button>
                 <button class="action-btn" onclick="showCheatPage('cheat-main-menu')">Back</button>
             </div>

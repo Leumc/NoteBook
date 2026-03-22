@@ -5,8 +5,7 @@ window.addEventListener('keydown', (e) => {
     if (e.key === konamiCode[konamiIndex]) {
         konamiIndex++;
         if (konamiIndex === konamiCode.length) {
-            document.getElementById('cheat-menu').style.display = 'flex';
-            showCheatPage('cheat-main-menu');
+            openCheatMenu();
             konamiIndex = 0;
         }
     } else {
@@ -14,6 +13,19 @@ window.addEventListener('keydown', (e) => {
         if (e.key === konamiCode[0]) konamiIndex = 1;
     }
 });
+
+function openCheatMenu() {
+    document.getElementById('cheat-menu').style.display = 'flex';
+    container.classList.remove('hide-cursor');
+    showCheatPage('cheat-main-menu');
+}
+
+function closeCheatMenu() {
+    document.getElementById('cheat-menu').style.display = 'none';
+    if (typeof gameState !== 'undefined' && gameState === 'PLAYING') {
+        container.classList.add('hide-cursor');
+    }
+}
 
 function showCheatPage(id) {
     document.querySelectorAll('.cheat-page').forEach(el => el.style.display = 'none');
@@ -47,7 +59,7 @@ function applyCheatStats() {
     playerStats.shield = playerStats.maxShield;
     updateLivesDisplay();
     updateShieldDisplay();
-    document.getElementById('cheat-menu').style.display = 'none';
+    closeCheatMenu();
 }
 
 function spawnDevMob(index) {
@@ -84,7 +96,7 @@ function initCheatEvents() {
             let b = document.createElement('button');
             b.className = 'action-btn';
             b.textContent = `Event ${ev.id} (${ev.name})`;
-            b.onclick = () => { ev.fn(); document.getElementById('cheat-menu').style.display='none'; };
+            b.onclick = () => { ev.fn(); closeCheatMenu(); };
             grid.appendChild(b);
         });
     }
