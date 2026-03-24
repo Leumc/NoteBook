@@ -162,9 +162,8 @@ function cheatGrantUpgrade(id) {
         case 'crit': playerStats.critRate += 0.15; break;
         case 'critDamage': playerStats.critDamageMult += 1.0; break;
         case 'execute': playerStats.executeChance += 0.05; break;
-        case 'homing': playerStats.homingCount = (playerStats.homingCount||0) + 1; break;
+        case 'homing': if (!playerStats.hasHoming) playerStats.hasHoming = true; else playerStats.homingDamageMult += 0.5; break;
         case 'aoe': playerStats.aoeRadius = playerStats.aoeRadius ? playerStats.aoeRadius + 40 : 120; break;
-        case 'heal': healPlayer(15); break;
         case 'maxLifeUp': playerStats.maxLives += 20; healPlayer(playerStats.maxLives); break;
         case 'shieldMaxUp': playerStats.maxShield += 10; playerStats.shield += 10; updateShieldDisplay(); break;
         case 'dodgeRate': playerStats.dodgeRate += 0.1; break;
@@ -172,7 +171,6 @@ function cheatGrantUpgrade(id) {
         case 'slowAura': playerStats.globalSlow += 0.05; break;
         case 'knockback': playerStats.knockbackDist += 10; break;
         case 'stunChance': playerStats.stunChance += 0.1; break;
-        case 'bulletSize': playerStats.bulletSizeMult += 0.5; break;
         case 'xpGainUp': playerStats.xpMult += 0.2; break;
         case 'focusedFire': playerStats.spreadAngle = Math.max(5, playerStats.spreadAngle * 0.8); break;
         case 'ammoCapUp': playerStats.maxAmmo += 10; updateAmmoDisplay(); break;
@@ -191,7 +189,7 @@ function cheatGrantAdvUpgrade(id) {
         case 'crit': playerStats.critRate = 1.0; playerStats.critDamageMult += 2.0; break;
         case 'critDamage': playerStats.critDamageMult += 15.0; break;
         case 'execute': playerStats.executeChance = 0.50; break;
-        case 'homing': playerStats.homingCount *= 2; playerStats.homingPierce = 3; break;
+        case 'homing': playerStats.hasHoming = true; playerStats.homingCountMult = 2; playerStats.homingDamageMult *= 2.0; playerStats.homingPierce = 1; break;
         case 'aoe': playerStats.aoeRadius = 1500; playerStats.aoeDamageMult *= 2; break;
         case 'maxLifeUp': playerStats.maxLives += 400; healPlayer(playerStats.maxLives); break;
         case 'shieldMaxUp': playerStats.maxShield += 300; playerStats.shield += 300; updateShieldDisplay(); break;
@@ -200,7 +198,6 @@ function cheatGrantAdvUpgrade(id) {
         case 'slowAura': playerStats.globalSlow += 0.75; break;
         case 'knockback': playerStats.knockbackDist += 150; break;
         case 'stunChance': playerStats.stunChance = 0.80; playerStats.stunDuration = 180; break;
-        case 'bulletSize': playerStats.bulletSizeMult += 4.0; playerStats.damage += 10; break;
         case 'xpGainUp': playerStats.xpMult += 4.0; break;
         case 'focusedFire': playerStats.spreadAngle = 0; break;
         case 'ammoCapUp': playerStats.maxAmmo += 100; updateAmmoDisplay(); break;

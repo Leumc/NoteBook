@@ -73,9 +73,9 @@ function switchManualTab(tabName, btnElement) {
             crit: '暴击率变为 100%，额外暴击倍率大幅提升', critDamage: '暴击伤害倍率极大幅度飙升', execute: '秒杀概率升至 50%',
             maxLifeUp: '负载上限大幅提升并瞬间回满', shieldMaxUp: '护盾上限极大增加，并获得等量护盾', dodgeRate: '获得极高的绝对闪避概率 (80%)',
             lifeSteal: '吸血概率及吸血量巨幅增加', slowAura: '全局代码块移动速度极速降低 (减速 75%)', knockback: '异常击中代码块时发生强制极远击退',
-            stunChance: '死锁概率极大提升，时长巨幅延长', bulletSize: '抛出的异常体积超级巨大化，且附带额外伤害', xpGainUp: '经验获取倍率提升至 500%',
+            stunChance: '死锁概率极大提升，时长巨幅延长', xpGainUp: '经验获取倍率提升至 500%',
             focusedFire: '多弹道不再散射，变为完全同向的收束激光', ammoCapUp: '弹夹容量极大提升 (+100)', reloadSpeedUp: '换弹时间极度压缩 (-60%)',
-            pickupRangeUp: '代码碎片拾取范围变为全屏无限', homing: '追踪弹数量翻倍，射速极度加快，并获得穿甲能力',
+            pickupRangeUp: '代码碎片拾取范围变为全屏无限', homing: '数量与总伤翻倍，射速加快，获得1次专属穿透(穿透后减半)',
             aoe: '全域内存湮灭波，范围激增至全屏级别，伤害倍率激增'
         };
 
@@ -150,7 +150,7 @@ function switchManualTab(tabName, btnElement) {
                     <li><strong style="color: #00ff00">Healer：</strong> 高频率为整个阵列的其他模块恢复 500 点血量，不尽早击毁会导致 Boss 长久存活。</li>
                     <li><strong style="color: #ff0000">Cannon：</strong> 周期性向周围无死角发射高危致命弹幕。</li>
                     <li><strong style="color: #00ffff">Shielder：</strong> 定期在 Boss 周边生成极高血量的坚硬实体防弹壁垒，阻挡你的火力。</li>
-                    <li><strong style="color: #ff4d4d">狂暴二阶段：</strong> 如果你成功敲掉了所有的防卫模块（独剩核心），底层事件系统将进入失控暴走——场外事件触发间隔强制缩短至 <span style="color:#ffcc00; font-weight:bold;">5秒</span>！</li>
+                    <li><strong style="color: #ff4d4d">狂暴二阶段：</strong> 如果你成功敲掉了所有的防卫模块（独剩核心），底层事件系统将进入失控暴走——场外事件触发间隔强制缩短至极短的 <span style="color:#ffcc00; font-weight:bold;">3秒</span>！</li>
                 </ul>
             </div>
         `;

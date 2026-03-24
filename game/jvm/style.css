@@ -914,6 +914,12 @@ input[type=range].mp-slider::-moz-range-thumb {
     to { transform: rotate(360deg); }
 }
 .spin-anim {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    width: 1em;
+    height: 1em;
+    transform-origin: center;
     animation: spinDisc 4s linear infinite;
 }

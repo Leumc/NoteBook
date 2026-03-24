@@ -253,9 +253,8 @@ const langConfig = {
             crit: { title: '反射暴击', desc: '15% 概率触发暴击' },
             critDamage: { title: '重度崩溃', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'System.exit(1)', desc: '5% 概率直接秒杀普通代码块' },
-            homing: { title: 'CompletableFuture 异步', desc: '增加每2秒发射的自动追踪异步异常 (+1)' },
+            homing: { title: 'CompletableFuture 异步', desc: '开启追踪异常，总伤受射弹数平分，重复升级总伤+50%' },
             aoe: { title: 'Parallel GC 回收', desc: '扩大周期性释放的垃圾回收冲击波范围' },
-            heal: { title: 'GC 回收', desc: '恢复 15 点系统负载' },
             maxLifeUp: { title: '增加堆内存', desc: '负载上限 +20 并回满' },
             shieldMaxUp: { title: '安全沙箱', desc: '护盾上限 +10 并获得等量护盾' },
             dodgeRate: { title: '异常捕获 (try-catch)', desc: '10% 概率忽略受到的系统负载伤害' },
@@ -263,7 +262,6 @@ const langConfig = {
             slowAura: { title: '线程阻塞', desc: '全局代码块移动速度降低 5%' },
             knockback: { title: '异常弹回', desc: '异常击中代码块时将其击退' },
             stunChance: { title: '死锁触发', desc: '10% 概率使击中的代码块卡死 1 秒' },
-            bulletSize: { title: '大对象分配', desc: '抛出的异常体积增加 50%' },
             xpGainUp: { title: 'Profiler 分析', desc: '获得的经验值增加 20%' },
             focusedFire: { title: '同步锁', desc: '缩小多弹道散射角度 20%' },
             ammoCapUp: { title: '增大缓冲池', desc: '弹夹容量 +10' },
@@ -291,9 +289,8 @@ const langConfig = {
             crit: { title: '元类黑魔法', desc: '15% 概率触发暴击' },
             critDamage: { title: '深层 Traceback', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'os._exit()', desc: '5% 概率直接秒杀普通代码块' },
-            homing: { title: 'asyncio 协程', desc: '增加每2秒发射的自动追踪异步任务 (+1)' },
+            homing: { title: 'asyncio 协程', desc: '开启追踪任务，总伤受射弹数平分，重复升级总伤+50%' },
             aoe: { title: 'ob_refcnt 归零脉冲', desc: '扩大周期性释放的引用计数清零冲击波范围' },
-            heal: { title: 'gc.collect()', desc: '恢复 15 点系统负载' },
             maxLifeUp: { title: '放宽递归限制', desc: '负载上限 +20 并回满' },
             shieldMaxUp: { title: '虚拟环境', desc: '护盾上限 +10 并获得等量护盾' },
             dodgeRate: { title: 'except Exception:', desc: '10% 概率忽略受到的系统负载伤害' },
@@ -301,7 +298,6 @@ const langConfig = {
             slowAura: { title: 'GIL 竞争', desc: '全局代码块移动速度降低 5%' },
             knockback: { title: '生成器挂起', desc: '异常击中代码块时将其击退' },
             stunChance: { title: 'time.sleep()', desc: '10% 概率使击中的代码块卡死 1 秒' },
-            bulletSize: { title: '胖指针对象', desc: '抛出的异常体积增加 50%' },
             xpGainUp: { title: 'cProfile 剖析', desc: '获得的经验值增加 20%' },
             focusedFire: { title: '闭包绑定', desc: '缩小多弹道散射角度 20%' },
             ammoCapUp: { title: '增加生成器容量', desc: '弹夹容量 +10' },
@@ -329,9 +325,8 @@ const langConfig = {
             crit: { title: '野指针强转', desc: '15% 概率触发暴击' },
             critDamage: { title: '未定义行为 (UB)', desc: '暴击伤害倍率 +1.0x' },
             execute: { title: 'std::abort()', desc: '5% 概率直接秒杀普通代码块' },
-            homing: { title: '智能指针', desc: '增加每2秒发射的自动追踪智能指针数量 (+1)' },
+            homing: { title: '智能指针', desc: '开启追踪指针，总伤受射弹数平分，重复升级总伤+50%' },
             aoe: { title: '内存池刷新', desc: '扩大周期性释放的内存刷新波范围' },
-            heal: { title: 'delete 释放', desc: '恢复 15 点系统负载' },
             maxLifeUp: { title: '扩大虚拟内存', desc: '负载上限 +20 并回满' },
             shieldMaxUp: { title: '内存保护', desc: '护盾上限 +10 并获得等量护盾' },
             dodgeRate: { title: 'catch(...)', desc: '10% 概率忽略受到的系统负载伤害' },
@@ -339,7 +334,6 @@ const langConfig = {
             slowAura: { title: '缓存未命中', desc: '全局代码块移动速度降低 5%' },
             knockback: { title: '栈溢出覆写', desc: '异常击中代码块时将其击退' },
             stunChance: { title: '互斥锁死锁', desc: '10% 概率使击中的代码块卡死 1 秒' },
-            bulletSize: { title: '超大结构体', desc: '抛出的异常体积增加 50%' },
             xpGainUp: { title: 'Valgrind 分析', desc: '获得的经验值增加 20%' },
             focusedFire: { title: '指针别名限制', desc: '缩小多弹道散射角度 20%' },
             ammoCapUp: { title: '对象池扩容', desc: '弹夹容量 +10' },
@@ -354,7 +348,6 @@ let currentLang = 'java';
 let gameState = 'START';
 let score = 0; let lives = 200;
 let codeBlocks = []; let bullets = []; let enemyBullets = []; let drops = [];
-let blockSpawnInterval;
 let autoRegenInterval;
 let shieldRegenInterval;
 
@@ -451,13 +444,12 @@ class Bullet {
 
         // 缓存以消除强制重排 (Reflow) 带来的严重性能开销
         if (!bulletSizeCache || bulletSizeCache.mult !== playerStats.bulletSizeMult || bulletSizeCache.lang !== currentLang) {
-            const rect = this.element.getBoundingClientRect();
-            bulletSizeCache = { w: rect.width, h: rect.height, mult: playerStats.bulletSizeMult, lang: currentLang };
+            bulletSizeCache = { w: this.element.offsetWidth, h: this.element.offsetHeight, mult: playerStats.bulletSizeMult, lang: currentLang };
         }
         this.width = bulletSizeCache.w; this.height = bulletSizeCache.h;
 
         this.x = startX - (this.width / 2);
-        this.y = startY - 13 - this.height;
+        this.y = startY - this.height;
         this.angleDeg = angleDeg;
 
         this.pierceLeft = playerStats.pierce;
@@ -502,7 +494,7 @@ class HomingBullet {
         
         // 【修复】加入随机位置偏移，打乱完全重合的初始生成坐标
         this.x = startX - (this.width / 2) + (Math.random() - 0.5) * 30; 
-        this.y = startY - 13 - this.height + (Math.random() - 0.5) * 15;
+        this.y = startY - (this.height / 2) + (Math.random() - 0.5) * 15;
         
         // 【修复】随机化各子弹的初速度和空气动力学转向率，打散飞行同步制导
         this.speed = playerStats.bulletSpeed * (0.6 + Math.random() * 0.4);
@@ -511,9 +503,10 @@ class HomingBullet {
         this.speedX = Math.sin(angleRad) * this.speed;
         this.speedY = Math.cos(angleRad) * this.speed; // 正数代表向上
         
-        this.pierceLeft = (playerStats.homingPierce || 0) + playerStats.pierce; // 继承系统穿透力
+        this.pierceLeft = playerStats.homingPierce || 0; // 不再继承系统穿透力，由进阶独立提供
         if (!this.hitSet) this.hitSet = new Set(); else this.hitSet.clear();
         this.angleDeg = initialAngle;
+        this.isHoming = true;
         this.lifespan = 300; // 5秒存活时间 (假设 60fps)
         this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0) rotate(${this.angleDeg - 90}deg)`;
     }
@@ -561,19 +554,17 @@ class EnemyBullet {
         this.element.textContent = textOverride || langConfig[currentLang].enemyBullet;
 
         if (!textOverride && (!enemyBulletSizeCache || enemyBulletSizeCache.lang !== currentLang)) {
-            const rect = this.element.getBoundingClientRect();
-            enemyBulletSizeCache = { w: rect.width, h: rect.height, lang: currentLang };
+            enemyBulletSizeCache = { w: this.element.offsetWidth, h: this.element.offsetHeight, lang: currentLang };
         }
 
         if (textOverride) {
-            const rect = this.element.getBoundingClientRect();
-            this.width = rect.width; this.height = rect.height;
+            this.width = this.element.offsetWidth; this.height = this.element.offsetHeight;
         } else {
             this.width = enemyBulletSizeCache.w; this.height = enemyBulletSizeCache.h;
         }
 
         this.x = startX - (this.width / 2);
-        this.y = startY;
+        this.y = startY - (this.height / 2);
 
         const angleRad = Math.atan2(targetY - startY, targetX - startX);
         // 降低敌方子弹的初始速度与成长速度
@@ -617,7 +608,7 @@ class ExpDrop {
         let dy = playerY - this.y;
         let dist = Math.hypot(dx, dy);
         if (dist < playerStats.pickupRange) {
-            let speed = 15 * globalSpeedMult;
+            let speed = 15; // 修复：经验球飞向玩家的磁吸速度不再受全局减速影响
             if (dist < speed) {
                 this.remove(); gainXp(this.value); return false;
             }
@@ -654,7 +645,7 @@ class BossExpDrop {
         let dy = playerY - (this.y + 18);
         let dist = Math.hypot(dx, dy);
         if (dist < playerStats.pickupRange) {
-            let speed = 15 * globalSpeedMult;
+            let speed = 15; // 修复：经验球飞向玩家的磁吸速度不再受全局减速影响
             if (dist < speed) {
                 this.remove(); 
                 showDamageText(playerX, playerY - 40, `+${this.value} XP`, 'crit');
@@ -728,14 +719,6 @@ function createPopupInfo(x, y, message, cssClass, isCrit = false) {
 function updateEventTimerUI(ms) {
     const timer = document.getElementById('event-timer');
     if (timer) timer.textContent = (ms / 1000).toFixed(1);
-}
-
-function spawnCodeBlock() {
-    if (gameState !== 'PLAYING' || activeBoss !== null) return;
-    codeBlocks.push(new CodeBlock(container, playerStats.level));
-    let spawnRate = Math.max(400, 1500 * Math.pow(0.9, playerStats.level - 1));
-    clearInterval(blockSpawnInterval);
-    blockSpawnInterval = setInterval(spawnCodeBlock, spawnRate);
 }
 
 function spawnBaseMonster(x, y) {
@@ -873,8 +856,14 @@ function triggerLevelUp() {
     currentHealCost = 10;
 
     const pool = getUpgradePool(playerStats, healPlayer);
-    const shuffled = [...pool].sort(() => 0.5 - Math.random());
-    const options = shuffled.slice(0, 4);
+    
+    const guaranteed = pool.filter(o => o.isAdvanced);
+    const normal = pool.filter(o => !o.isAdvanced);
+    const shuffled = normal.sort(() => 0.5 - Math.random());
+    
+    let options = [...guaranteed];
+    while (options.length < 4 && shuffled.length > 0) options.push(shuffled.pop());
+    options = options.slice(0, 4).sort(() => 0.5 - Math.random()); // 保证进阶必定出现，但位置随机
 
     const baseTitle = langConfig[currentLang].levelUpTitle;
     let remainingText = pendingLevelUps > 1 ? `<br><span style="font-size:18px; color:var(--warning-color);">[ 连续跃升！剩余 ${pendingLevelUps - 1} 次优化待选择 ]</span>` : '';
@@ -930,9 +919,15 @@ function renderLevelUpUI(options) {
         if (pendingFp >= cost) {
             pendingFp -= cost;
             currentRefreshCost = Math.floor(currentRefreshCost * 1.5);
+            
             const pool = getUpgradePool(playerStats, healPlayer);
-            const shuffled = [...pool].sort(() => 0.5 - Math.random());
-            renderUpgCards(shuffled.slice(0, 4));
+            const guaranteed = pool.filter(o => o.isAdvanced);
+            const normal = pool.filter(o => !o.isAdvanced);
+            const shuffled = normal.sort(() => 0.5 - Math.random());
+            let options = [...guaranteed];
+            while (options.length < 4 && shuffled.length > 0) options.push(shuffled.pop());
+            
+            renderUpgCards(options.slice(0, 4).sort(() => 0.5 - Math.random()));
             updateFpPanel();
         }
     };
@@ -1150,6 +1145,7 @@ function checkCollisions() {
 
             if (b.x < c.x + c.width && b.x + b.width > c.x && b.y < c.y + c.height && b.y + b.height > c.y) {
                 if (b.hitSet.has(c)) continue;
+                let isPiercedHit = b.hitSet.size > 0;
                 b.hitSet.add(c);
 
                 if (Math.random() < playerStats.stunChance) {
@@ -1164,7 +1160,13 @@ function checkCollisions() {
                 }
 
                 const isCrit = Math.random() < playerStats.critRate;
-                let actualDamage = isCrit ? playerStats.damage * playerStats.critDamageMult : playerStats.damage;
+                let baseDmg = playerStats.damage;
+                if (b.isHoming) {
+                    let totalHomingDmg = playerStats.damage * playerStats.homingDamageMult;
+                    baseDmg = totalHomingDmg / (playerStats.multiShot * (playerStats.homingCountMult || 1));
+                    if (isPiercedHit) baseDmg /= 2; // 穿透后的第二次伤害衰减一半
+                }
+                let actualDamage = Math.max(1, Math.floor(isCrit ? baseDmg * playerStats.critDamageMult : baseDmg));
 
                 if (Math.random() < playerStats.executeChance && c.isBase) {
                     actualDamage = c.maxHp; 
@@ -1283,6 +1285,14 @@ function gameLoop(timestamp) {
             if (bossTimerEl) bossTimerEl.parentElement.style.display = 'none';
             if (typeof spawnBoss1 === 'function') spawnBoss1();
         }
+        
+        // 修复：普通怪生成逻辑，受减速/帧率影响
+        if (window.blockSpawnTimer === undefined) window.blockSpawnTimer = 1500;
+        window.blockSpawnTimer -= dt * globalSpeedMult;
+        if (window.blockSpawnTimer <= 0) {
+            codeBlocks.push(new CodeBlock(container, playerStats.level));
+            window.blockSpawnTimer = Math.max(400, 1500 * Math.pow(0.9, playerStats.level - 1));
+        }
     } else {
         activeBoss.update(globalSpeedMult);
         
@@ -1298,12 +1308,12 @@ function gameLoop(timestamp) {
     }
 
     // 新增：自动攻击与脉冲逻辑判定
-    if (playerStats.homingCount > 0) {
+    if (playerStats.hasHoming) {
         if (window.homingTimer === undefined) window.homingTimer = 0;
         window.homingTimer -= dt;
         if (window.homingTimer <= 0) {
-            window.homingTimer = (playerStats.homingPierce > 0 ? 1000 : 2000) * playerStats.fireRateModifier; 
-            let totalHoming = playerStats.homingCount * playerStats.multiShot; // 继承多重射击
+            window.homingTimer = (playerStats.homingPierce > 0 ? 1500 : 3000) * playerStats.fireRateModifier; 
+            let totalHoming = playerStats.multiShot * (playerStats.homingCountMult || 1); // 继承多重射击，进阶效果允许翻倍
             let baseSpread = 35; // 加大初始抛射的扇形散布角度
             let startAngle = -baseSpread * (totalHoming - 1) / 2;
             for(let i = 0; i < totalHoming; i++) {
@@ -1317,7 +1327,7 @@ function gameLoop(timestamp) {
         if (window.aoeTimer === undefined) window.aoeTimer = 0;
         window.aoeTimer -= dt;
         if (window.aoeTimer <= 0) {
-            window.aoeTimer = 3000 * playerStats.fireRateModifier; // 继承射击频率
+            window.aoeTimer = 10000 * playerStats.fireRateModifier; // 继承射击频率，大幅延长基础发射间隔
             triggerAoEBurst();
         }
     }
@@ -1339,6 +1349,11 @@ function gameLoop(timestamp) {
         }
     }
     if (fireCooldownTimer > 0) fireCooldownTimer--;
+
+    // 修复：事件发生器桥接至主循环，事件生成真正挂钩减速系统
+    if (typeof tickEventSystem === 'function') {
+        tickEventSystem(dt, globalSpeedMult);
+    }
 
     for (let i = codeBlocks.length - 1; i >= 0; i--) {
         let result = codeBlocks[i].update(playerX, playerY, playerStats.level, spawnEnemyBullet, spawnBaseMonster, globalSpeedMult);
@@ -1381,7 +1396,9 @@ function startGame() {
     bossMobTimer = 0;
     window.bossPhase2 = false;
     
-    playerStats.homingCount = 0;
+    playerStats.hasHoming = false;
+    playerStats.homingDamageMult = 1.0;
+    playerStats.homingCountMult = 1.0;
     playerStats.aoeRadius = 0;
     playerStats.homingPierce = 0;
     playerStats.aoeDamageMult = 3.0;
@@ -1434,8 +1451,7 @@ function startGame() {
     updateAmmoDisplay();
 
     gameState = 'PLAYING';
-    if (blockSpawnInterval) clearInterval(blockSpawnInterval);
-    blockSpawnInterval = setInterval(spawnCodeBlock, 1500); // 加快初始生成速度
+    window.blockSpawnTimer = 1500;
     
     if (autoRegenInterval) clearInterval(autoRegenInterval);
     autoRegenInterval = setInterval(() => {
@@ -1516,7 +1532,7 @@ function returnToMenu() {
     topUi.style.display = 'none'; executionZone.style.display = 'none'; playerElement.style.display = 'none';
     langSelector.style.display = 'block'; startScreen.style.display = 'flex';
     if (bgCanvas) bgCanvas.style.display = 'block'; // 回到主菜单恢复代码雨
-    clearInterval(blockSpawnInterval); clearInterval(autoRegenInterval); clearInterval(shieldRegenInterval); stopEventSystem();
+    clearInterval(autoRegenInterval); clearInterval(shieldRegenInterval); stopEventSystem();
     codeBlocks.forEach(b => b.remove()); codeBlocks = [];
     bullets.forEach(b => b.remove()); bullets = [];
     enemyBullets.forEach(b => b.remove()); enemyBullets = [];
@@ -1540,7 +1556,7 @@ function endGame() {
     langSelector.style.display = 'block'; // 游戏结束恢复选择器
     if (bgCanvas) bgCanvas.style.display = 'block'; // 游戏结束恢复代码雨
     gameOverScreen.style.display = 'flex';
-    clearInterval(blockSpawnInterval); clearInterval(autoRegenInterval); clearInterval(shieldRegenInterval);
+    clearInterval(autoRegenInterval); clearInterval(shieldRegenInterval);
     stopEventSystem();
 }
 

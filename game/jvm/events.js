@@ -1,33 +1,31 @@
 let currentEventInterval = 40000;
 let eventTimeRemaining = 40000;
-let eventTickId = null;
 let bossEventToggle = false;
+let activeGenerators = [];
 
 function startEventSystem() {
     currentEventInterval = 40000;
     eventTimeRemaining = currentEventInterval;
-    if (eventTickId) clearInterval(eventTickId);
-    eventTickId = setInterval(tickEventSystem, 100);
+    activeGenerators = [];
     if (typeof updateEventTimerUI === 'function') updateEventTimerUI(eventTimeRemaining);
 }
 
 function stopEventSystem() {
-    if (eventTickId) {
-        clearInterval(eventTickId);
-        eventTickId = null;
-    }
+    activeGenerators = [];
 }
 
-function tickEventSystem() {
+function tickEventSystem(dt, globalSpeedMult) {
     if (gameState !== 'PLAYING') return;
     
+    let scaledDt = dt * globalSpeedMult;
+
     // 如果进入 Boss 战，事件间隔被固定覆盖为 10 秒
     if (typeof activeBoss !== 'undefined' && activeBoss !== null) {
-        let limit = window.bossPhase2 ? 5000 : 10000;
+        let limit = window.bossPhase2 ? 3000 : 10000;
         if (eventTimeRemaining > limit) eventTimeRemaining = limit;
     }
     
-    eventTimeRemaining -= 100;
+    eventTimeRemaining -= scaledDt;
     if (typeof updateEventTimerUI === 'function') updateEventTimerUI(eventTimeRemaining);
     if (eventTimeRemaining <= 0) {
         if (typeof activeBoss !== 'undefined' && activeBoss !== null) {
@@ -46,6 +44,18 @@ function tickEventSystem() {
             eventTimeRemaining = currentEventInterval;
         }
     }
+
+    // 处理被延时的发生器更新
+    for (let i = activeGenerators.length - 1; i >= 0; i--) {
+        let gen = activeGenerators[i];
+        gen.timer -= scaledDt;
+        if (gen.timer <= 0) {
+            gen.fn();
+            gen.count++;
+            if (gen.count >= gen.maxCount) activeGenerators.splice(i, 1);
+            else gen.timer = gen.interval;
+        }
+    }
 }
 
 function triggerRandomEvent() {
@@ -58,16 +68,14 @@ function triggerRandomEvent() {
 // a:持续20秒内，持续不断地生成快速普通怪（每秒4次）
 function triggerEventA() {
     if (typeof showAnnouncement === 'function') showAnnouncement('警告：高频快速请求爆发！');
-    let count = 0;
-    let intv = setInterval(() => {
-        if (gameState !== 'PLAYING') {
-            clearInterval(intv);
-            return;
+    activeGenerators.push({
+        interval: 250, timer: 0, count: 0, maxCount: 80,
+        fn: () => {
+            if (typeof codeBlocks !== 'undefined') {
+                codeBlocks.push(new CodeBlock(container, playerStats.level, 'fast'));
+            }
         }
-        codeBlocks.push(new CodeBlock(container, playerStats.level, 'fast'));
-        count++;
-        if (count >= 80) clearInterval(intv);
-    }, 250);
+    });
 }
 
 // b:直接一次性在页面中部生成一排不会动的厚血普通怪
@@ -109,47 +117,41 @@ const gameEventsList = [
 // c:在右侧从上到下依次生成侧向的发射子弹的怪
 function triggerEventC() {
     if (typeof showAnnouncement === 'function') showAnnouncement('警告：右侧检测到侧信道攻击！');
-    let count = 0;
     const maxCount = Math.floor((window.innerHeight - 100) / 60);
-    let intv = setInterval(() => {
-        if (gameState !== 'PLAYING') {
-            clearInterval(intv);
-            return;
+    let currentCount = 0;
+    activeGenerators.push({
+        interval: 500, timer: 0, count: 0, maxCount: maxCount,
+        fn: () => {
+            let m = new CodeBlock(container, playerStats.level, 'side_sniper');
+            m.dirX = -1;
+            m.x = window.innerWidth;
+            m.y = 50 + currentCount * 60;
+            m.baseSpeedX = -Math.abs(m.baseSpeedX);
+            m.element.style.transform = `translate3d(${m.x}px, ${m.y}px, 0)`;
+            codeBlocks.push(m);
+            currentCount++;
         }
-        let m = new CodeBlock(container, playerStats.level, 'side_sniper');
-        m.dirX = -1;
-        m.x = window.innerWidth;
-        m.y = 50 + count * 60;
-        m.baseSpeedX = -Math.abs(m.baseSpeedX);
-        m.element.style.transform = `translate3d(${m.x}px, ${m.y}px, 0)`;
-        codeBlocks.push(m);
-        
-        count++;
-        if (count >= maxCount) clearInterval(intv);
-    }, 500);
+    });
 }
 
 // d:c事件在左侧的版本
 function triggerEventD() {
     if (typeof showAnnouncement === 'function') showAnnouncement('警告：左侧检测到侧信道攻击！');
-    let count = 0;
     const maxCount = Math.floor((window.innerHeight - 100) / 60);
-    let intv = setInterval(() => {
-        if (gameState !== 'PLAYING') {
-            clearInterval(intv);
-            return;
+    let currentCount = 0;
+    activeGenerators.push({
+        interval: 500, timer: 0, count: 0, maxCount: maxCount,
+        fn: () => {
+            let m = new CodeBlock(container, playerStats.level, 'side_sniper');
+            m.dirX = 1;
+            m.x = -m.width;
+            m.y = 50 + currentCount * 60;
+            m.baseSpeedX = Math.abs(m.baseSpeedX);
+            m.element.style.transform = `translate3d(${m.x}px, ${m.y}px, 0)`;
+            codeBlocks.push(m);
+            currentCount++;
         }
-        let m = new CodeBlock(container, playerStats.level, 'side_sniper');
-        m.dirX = 1;
-        m.x = -m.width;
-        m.y = 50 + count * 60;
-        m.baseSpeedX = Math.abs(m.baseSpeedX);
-        m.element.style.transform = `translate3d(${m.x}px, ${m.y}px, 0)`;
-        codeBlocks.push(m);
-        
-        count++;
-        if (count >= maxCount) clearInterval(intv);
-    }, 500);
+    });
 }
 
 // e:在每个在场怪物的正下方生成一个厚血怪
