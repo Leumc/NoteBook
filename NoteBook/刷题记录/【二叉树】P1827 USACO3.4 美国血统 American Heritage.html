@@ -4,9 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer-when-downgrade">
     <title>刷题记录/【二叉树】P1827 USACO3.4 美国血统 American Heritage</title>
     <!-- 引入不蒜子核心脚本 -->
-    <script src="//cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script>
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </head>
 <style>
     /* 1. 定义赛博朋克风格的全局霓虹色变量 */
@@ -547,6 +548,49 @@ span.linenos.special { color: #50fa7b; background-color: #6272a4; padding-left: 
         border-color: var(--neon-cyan);
     }
 
+    /* =========================================
+       新增：外部/内部页面嵌入样式 (Iframe & Quote)
+       ========================================= */
+    .iframe-wrapper {
+        margin: 30px 0;
+        border: 1px solid rgba(88, 166, 255, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.4);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    }
+    .iframe-wrapper iframe {
+        width: 100%;
+        height: 500px;
+        border: none;
+        display: block;
+    }
+    .iframe-meta {
+        padding: 12px 20px;
+        background: rgba(88, 166, 255, 0.08);
+        border-top: 1px dashed rgba(88, 166, 255, 0.2);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85em;
+        text-align: center;
+    }
+    .iframe-meta a {
+        color: var(--neon-cyan);
+        text-decoration: none;
+        font-weight: bold;
+    }
+    
+    blockquote.embed-internal {
+        border-left: 4px solid var(--neon-purple);
+        background: linear-gradient(90deg, rgba(188, 140, 255, 0.1) 0%, transparent 100%);
+        margin: 1.5em 0;
+        padding: 15px 20px;
+        border-radius: 0 8px 8px 0;
+    }
+    blockquote.embed-internal a {
+        color: var(--neon-purple);
+        font-weight: bold;
+    }
+
     /* 9. 不蒜子统计页脚样式 */
     .analytics-footer {
         margin-top: 50px;
@@ -663,7 +707,7 @@ span.linenos.special { color: #50fa7b; background-color: #6272a4; padding-left: 
     <div class="container" data-file='刷题记录/【二叉树】P1827 USACO3.4 美国血统 American Heritage'>
         <div class="card-header">
             <span class="status-dot"></span>
-            <span class="path">NoteBook/刷题记录/【二叉树】P1827 USACO3.4 美国血统 American Heritage.md</span>
+            <span class="path">Note/刷题记录/【二叉树】P1827 USACO3.4 美国血统 American Heritage.md</span>
             <span class="cursor">_</span>
         </div>
 
@@ -696,7 +740,7 @@ span.linenos.special { color: #50fa7b; background-color: #6272a4; padding-left: 
 </div>
 <p>假设我们只是将节点的只给打印出来，那么<code>cout&lt;&lt;vs[x]</code>应该放在哪里？我们可以把它放在进入下层递归之前，也可以把它放在进入下一层递归之后，当然也可以把它放在两侧递归之间。很显然，<strong>不同的位置会导致遍历顺序发生改变。</strong></p>
 <p>以此二叉树为例：</p>
-<div class="img-wrapper"><img src="../image/美国血统/Gemini_Generated_Image_1coxl91coxl91cox.png" alt="Gemini_Generated_Image_1coxl91coxl91cox"></div>
+<div class="img-wrapper"><img src="../image/美国血统/Gemini_Generated_Image_1coxl91coxl91cox.png" alt="Gemini_Generated_Image_1coxl91coxl91cox.png"></div>
 
 <p>不同放置位置的区别如下（<strong>处理逻辑在哪就叫什么序遍历</strong>）：</p>
 <table>
@@ -723,14 +767,10 @@ span.linenos.special { color: #50fa7b; background-color: #6272a4; padding-left: 
 <td>递归函数之后</td>
 <td><code>D-&gt;G-&gt;E-&gt;B-&gt;F-&gt;C-&gt;A</code></td>
 </tr>
-<tr>
-<td><em>点击下方链接观看动态演示：</em></td>
-<td></td>
-<td></td>
-</tr>
 </tbody>
 </table>
-<div class="img-wrapper"><img src="tree.html" alt="tree"></div>
+<p><em>点击下方链接观看动态演示：</em></p>
+<blockquote class="embed-internal"><a href="../演示页面/二叉树三种遍历方式.html">二叉树的三种遍历过程</a></blockquote>
 
 <p>调整二叉树，改成从根节点向左右延长出两个长条，可以很好地观察出三种遍历的特点：
 - <strong>前序遍历</strong>：先访问根节点，然后左右侧都正序遍历。
@@ -863,16 +903,16 @@ function copyCode(btn) {
 </script>
 
         <div class="analytics-footer">
-            <span id="busuanzi_container_site_pv" style="display: none;">
-                全站访问量 <span id="busuanzi_value_site_pv" class="neon-text"></span> 次
+            <span id="busuanzi_container_site_pv">
+                全站访问量 <span id="busuanzi_value_site_pv" class="neon-text">--</span> 次
             </span>
             <span class="divider">|</span>
-            <span id="busuanzi_container_site_uv" style="display: none;">
-                总访客数 <span id="busuanzi_value_site_uv" class="neon-text"></span> 人
+            <span id="busuanzi_container_site_uv">
+                总访客数 <span id="busuanzi_value_site_uv" class="neon-text">--</span> 人
             </span>
             <span class="divider">|</span>
-            <span id="busuanzi_container_page_pv" style="display: none;">
-                本文阅读量 <span id="busuanzi_value_page_pv" class="neon-text"></span> 次
+            <span id="busuanzi_container_page_pv">
+                本文阅读量 <span id="busuanzi_value_page_pv" class="neon-text">--</span> 次
             </span>
         </div>
     </div>

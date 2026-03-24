@@ -4,9 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer-when-downgrade">
     <title>刷题记录/【链表】P1160 队列安排</title>
     <!-- 引入不蒜子核心脚本 -->
-    <script src="//cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script>
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </head>
 <style>
     /* 1. 定义赛博朋克风格的全局霓虹色变量 */
@@ -547,6 +548,49 @@ span.linenos.special { color: #50fa7b; background-color: #6272a4; padding-left: 
         border-color: var(--neon-cyan);
     }
 
+    /* =========================================
+       新增：外部/内部页面嵌入样式 (Iframe & Quote)
+       ========================================= */
+    .iframe-wrapper {
+        margin: 30px 0;
+        border: 1px solid rgba(88, 166, 255, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.4);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    }
+    .iframe-wrapper iframe {
+        width: 100%;
+        height: 500px;
+        border: none;
+        display: block;
+    }
+    .iframe-meta {
+        padding: 12px 20px;
+        background: rgba(88, 166, 255, 0.08);
+        border-top: 1px dashed rgba(88, 166, 255, 0.2);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85em;
+        text-align: center;
+    }
+    .iframe-meta a {
+        color: var(--neon-cyan);
+        text-decoration: none;
+        font-weight: bold;
+    }
+    
+    blockquote.embed-internal {
+        border-left: 4px solid var(--neon-purple);
+        background: linear-gradient(90deg, rgba(188, 140, 255, 0.1) 0%, transparent 100%);
+        margin: 1.5em 0;
+        padding: 15px 20px;
+        border-radius: 0 8px 8px 0;
+    }
+    blockquote.embed-internal a {
+        color: var(--neon-purple);
+        font-weight: bold;
+    }
+
     /* 9. 不蒜子统计页脚样式 */
     .analytics-footer {
         margin-top: 50px;
@@ -663,7 +707,7 @@ span.linenos.special { color: #50fa7b; background-color: #6272a4; padding-left: 
     <div class="container" data-file='刷题记录/【链表】P1160 队列安排'>
         <div class="card-header">
             <span class="status-dot"></span>
-            <span class="path">NoteBook/刷题记录/【链表】P1160 队列安排.md</span>
+            <span class="path">Note/刷题记录/【链表】P1160 队列安排.md</span>
             <span class="cursor">_</span>
         </div>
 
@@ -817,7 +861,7 @@ int main() {
 2. 令左右两侧节点互相指向的指针指向新插入的节点。
 另外，如果插入位置在首尾（即左右指针中有<code>nullptr</code>），那么只需要建立首/尾节点与新节点的互相指向关系即可。</p>
 <p>非首尾插入操作图示（向节点<code>k</code>的右侧插入，节点<code>n</code>序号未知）如下：</p>
-<div class="img-wrapper"><img src="链表插入.png" alt="链表插入"></div>
+<div class="img-wrapper"><img src="../image/队列安排/链表插入.png" alt="链表插入.png"></div>
 
 <p>用代码来写的话就是：</p>
 <div class="code-block-wrapper" style="position: relative;">
@@ -838,7 +882,7 @@ Nodes[i].right-&gt;left = &amp;Nodes[i];
 </pre></div></td></tr></table></div>
 </div>
 <p>然后再来考虑一下删除操作的实现。并不一定要真的把这个节点删掉，只要把它两边的链接断开即可，图示如下（删除节点<code>i</code>，节点<code>k</code>与节点<code>n</code>的序号未知）：</p>
-<div class="img-wrapper"><img src="链表删除.png" alt="链表删除"></div>
+<div class="img-wrapper"><img src="../image/队列安排/链表删除.png" alt="链表删除.png"></div>
 
 <p>代码表示：</p>
 <div class="code-block-wrapper" style="position: relative;">
@@ -1539,16 +1583,16 @@ function copyCode(btn) {
 </script>
 
         <div class="analytics-footer">
-            <span id="busuanzi_container_site_pv" style="display: none;">
-                全站访问量 <span id="busuanzi_value_site_pv" class="neon-text"></span> 次
+            <span id="busuanzi_container_site_pv">
+                全站访问量 <span id="busuanzi_value_site_pv" class="neon-text">--</span> 次
             </span>
             <span class="divider">|</span>
-            <span id="busuanzi_container_site_uv" style="display: none;">
-                总访客数 <span id="busuanzi_value_site_uv" class="neon-text"></span> 人
+            <span id="busuanzi_container_site_uv">
+                总访客数 <span id="busuanzi_value_site_uv" class="neon-text">--</span> 人
             </span>
             <span class="divider">|</span>
-            <span id="busuanzi_container_page_pv" style="display: none;">
-                本文阅读量 <span id="busuanzi_value_page_pv" class="neon-text"></span> 次
+            <span id="busuanzi_container_page_pv">
+                本文阅读量 <span id="busuanzi_value_page_pv" class="neon-text">--</span> 次
             </span>
         </div>
     </div>

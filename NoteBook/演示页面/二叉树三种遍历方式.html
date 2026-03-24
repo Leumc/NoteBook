@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>二叉树遍历与手动建树</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 { margin-top: 0; margin-bottom: 15px; }
+        
+        /* 控制面板样式 */
+        .panel {
+            width: 800px;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+        
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .controls-row:last-child { margin-bottom: 0; }
+        
+        button {
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        button:hover { background-color: #555; }
+        button:disabled { background-color: #222; color: #666; cursor: not-allowed; border-color: #333; }
+        
+        .btn-danger { background-color: #5c1a1a; border-color: #8a2b2b; }
+        .btn-danger:hover { background-color: #8a2b2b; }
+        
+        input[type="text"] {
+            background-color: #000;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px;
+            border-radius: 4px;
+            width: 100px;
+            text-align: center;
+        }
+
+        /* 状态与结果展示区 */
+        .step-text {
+            font-size: 16px;
+            color: #ffca28;
+            font-weight: bold;
+            margin-bottom: 8px;
+            min-height: 22px;
+        }
+        .result-box {
+            font-size: 18px;
+            letter-spacing: 5px;
+            color: #4caf50;
+            min-height: 26px;
+            border-top: 1px dashed #444;
+            padding-top: 8px;
+        }
+
+        /* 画布区 */
+        .tree-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background-color: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            user-select: none;
+        }
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #000;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .node:hover {
+            background-color: #222;
+        }
+        
+        /* 节点各种状态 */
+        .node.selected {
+            border-color: #2196f3;
+            box-shadow: 0 0 15px #2196f3;
+            color: #2196f3;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        .node.active {
+            border-color: #ffca28;
+            box-shadow: 0 0 15px #ffca28;
+            color: #ffca28;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        .node.visited {
+            background-color: #4caf50;
+            border-color: #4caf50;
+            color: #000;
+        }
+        .node.done {
+            border-color: #666;
+            color: #666;
+        }
+
+        .status-badge {
+            background: #222;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #aaa;
+        }
+        #selected-id { color: #2196f3; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>二叉树遍历与手动建树演示</h2>
+
+    <div class="panel">
+        <div class="controls-row">
+            <strong style="color: #2196f3;">[建树模式]</strong>
+            <span class="status-badge">当前选中节点: <span id="selected-id">无</span></span>
+            <input type="text" id="node-val" placeholder="新节点名称" maxlength="2">
+            <button onclick="addChild('left')">➕ 添加左孩子</button>
+            <button onclick="addChild('right')">➕ 添加右孩子</button>
+            <button class="btn-danger" onclick="deleteSelectedNode()">🗑️ 删除选中节点</button>
+            <span style="flex-grow: 1;"></span>
+            <button onclick="loadDefaultTree()">恢复默认示例树</button>
+            <button onclick="initEmptyTree()">清空树 (仅留根)</button>
+        </div>
+        <div class="controls-row" style="border-top: 1px solid #333; padding-top: 10px;">
+            <strong style="color: #ffca28;">[遍历演示]</strong>
+            <button id="btn-pre" onclick="startTraversal('pre')">前序遍历 (根左右)</button>
+            <button id="btn-in" onclick="startTraversal('in')">中序遍历 (左根右)</button>
+            <button id="btn-post" onclick="startTraversal('post')">后序遍历 (左右根)</button>
+            <button id="btn-reset" onclick="resetVisuals()">停止/重置动画</button>
+            <span style="margin-left: 10px; font-size: 13px;">
+                动画速度: <input type="range" id="speed" min="200" max="1500" value="800" dir="rtl" style="vertical-align: middle;">
+            </span>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 20px;">
+        <div class="step-text" id="step-text">请在上方点击节点进行编辑，或者点击遍历按钮开始演示...</div>
+        <div class="result-box" id="result-box"></div>
+    </div>
+
+    <div class="tree-container" id="tree-container">
+        </div>
+
+    <script>
+        // ================= 数据结构与核心状态 =================
+        let treeData = {};
+        let rootId = 'A';
+        let selectedNodeId = null;
+        let charCounter = 72; // ASCII 'H' 开始自动命名新节点
+        let currentRunId = 0; // 控制动画中断
+        let isTraversing = false;
+
+        // 容器尺寸常量
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 500;
+        const Y_START = 50;
+        const Y_GAP = 80;
+
+        // ================= 建树与布局逻辑 =================
+
+        // 恢复默认的 7 节点树
+        function loadDefaultTree() {
+            treeData = {
+                'A': { id: 'A', left: 'B', right: 'C' },
+                'B': { id: 'B', left: 'D', right: 'E' },
+                'C': { id: 'C', left: 'F', right: null },
+                'D': { id: 'D', left: null, right: null },
+                'E': { id: 'E', left: null, right: 'G' },
+                'F': { id: 'F', left: null, right: null },
+                'G': { id: 'G', left: null, right: null }
+            };
+            rootId = 'A';
+            charCounter = 72; // 'H'
+            resetAndDraw();
+        }
+
+        // 清空树，只留一个根节点
+        function initEmptyTree() {
+            treeData = { 'A': { id: 'A', left: null, right: null } };
+            rootId = 'A';
+            charCounter = 66; // 'B'
+            resetAndDraw();
+        }
+
+        // 动态计算每个节点的 X, Y 坐标 (分治法计算布局)
+        function calculateLayout(nodeId, leftBound, rightBound, depth) {
+            if (!nodeId || !treeData[nodeId]) return;
+            const node = treeData[nodeId];
+            
+            // 当前节点的 X 是左右边界的中心点，Y 随深度增加
+            node.x = (leftBound + rightBound) / 2;
+            node.y = Y_START + depth * Y_GAP;
+
+            // 递归计算左右子树的区域边界
+            calculateLayout(node.left, leftBound, node.x, depth + 1);
+            calculateLayout(node.right, node.x, rightBound, depth + 1);
+        }
+
+        // 渲染树
+        function drawTree() {
+            const container = document.getElementById('tree-container');
+            container.innerHTML = '';
+            
+            // 计算布局坐标
+            calculateLayout(rootId, 0, CANVAS_WIDTH, 0);
+
+            // 1. 绘制连线
+            let svgHTML = '<svg>';
+            for (let id in treeData) {
+                const node = treeData[id];
+                if (node.left && treeData[node.left]) {
+                    const child = treeData[node.left];
+                    svgHTML += `<line x1="${node.x}" y1="${node.y}" x2="${child.x}" y2="${child.y}" stroke="white" stroke-width="2"/>`;
+                }
+                if (node.right && treeData[node.right]) {
+                    const child = treeData[node.right];
+                    svgHTML += `<line x1="${node.x}" y1="${node.y}" x2="${child.x}" y2="${child.y}" stroke="white" stroke-width="2"/>`;
+                }
+            }
+            svgHTML += '</svg>';
+            container.innerHTML += svgHTML;
+
+            // 2. 绘制节点
+            for (let id in treeData) {
+                const node = treeData[id];
+                const isSelected = (id === selectedNodeId) ? 'selected' : '';
+                container.innerHTML += `
+                    <div class="node ${isSelected}" id="node-${id}" 
+                         style="left: ${node.x}px; top: ${node.y}px;"
+                         onclick="selectNode('${id}')">${id}</div>
+                `;
+            }
+        }
+
+        // ================= 交互操作逻辑 =================
+
+        // 选中节点
+        function selectNode(id) {
+            if (isTraversing) return; // 遍历时禁止编辑
+            selectedNodeId = id;
+            document.getElementById('selected-id').innerText = id;
+            document.getElementById('node-val').value = String.fromCharCode(charCounter);
+            drawTree(); // 重绘以刷新高亮
+        }
+
+        // 获取或生成新节点 ID
+        function getNextNodeId() {
+            let inputVal = document.getElementById('node-val').value.trim();
+            if (inputVal && !treeData[inputVal]) {
+                charCounter++; 
+                return inputVal;
+            }
+            // 如果输入框为空或名字重复，自动生成
+            let newId = String.fromCharCode(charCounter);
+            while(treeData[newId]) { // 防止重名
+                charCounter++;
+                newId = String.fromCharCode(charCounter);
+            }
+            charCounter++;
+            return newId;
+        }
+
+        // 添加子节点
+        function addChild(direction) {
+            if (!selectedNodeId) return alert("请先在画布中点击选中一个节点！");
+            const parent = treeData[selectedNodeId];
+            
+            if (parent[direction]) {
+                return alert(`该节点已经有${direction === 'left' ? '左' : '右'}孩子了！请先删除或选择其他节点。`);
+            }
+            
+            // 简单限制最大深度，防止画面超出 (通过计算根到该节点的距离)
+            let depth = 0;
+            let currentId = rootId;
+            // 简单防错：画布最大支持约 5 层
+            if(parent.y >= Y_START + 4 * Y_GAP) return alert("树太深啦！画布画不下了。");
+
+            const newId = getNextNodeId();
+            treeData[newId] = { id: newId, left: null, right: null };
+            parent[direction] = newId;
+            
+            resetVisuals();
+            selectNode(newId); // 自动选中新加的节点，方便连续添加
+        }
+
+        // 递归删除及其子树
+        function deleteSubTree(id) {
+            if (!id || !treeData[id]) return;
+            deleteSubTree(treeData[id].left);
+            deleteSubTree(treeData[id].right);
+            delete treeData[id];
+        }
+
+        // 删除选中的节点
+        function deleteSelectedNode() {
+            if (!selectedNodeId) return alert("请先选中要删除的节点！");
+            if (selectedNodeId === rootId) return alert("根节点无法删除，只能清空！");
+
+            // 找父节点并断开连接
+            for (let id in treeData) {
+                if (treeData[id].left === selectedNodeId) treeData[id].left = null;
+                if (treeData[id].right === selectedNodeId) treeData[id].right = null;
+            }
+
+            deleteSubTree(selectedNodeId);
+            selectedNodeId = null;
+            document.getElementById('selected-id').innerText = '无';
+            resetVisuals();
+        }
+
+        // ================= 遍历动画逻辑 (复用并优化) =================
+
+        const sleep = () => new Promise(r => setTimeout(r, document.getElementById('speed').value));
+        function logMsg(msg) { document.getElementById('step-text').innerText = msg; }
+        
+        function setNodeStatus(id, status) {
+            if(!id) return;
+            const el = document.getElementById(`node-${id}`);
+            if(el) {
+                if(el.classList.contains('visited') && status === 'active') {
+                    el.style.boxShadow = "0 0 15px #ffca28"; 
+                    return;
+                }
+                if(status === 'active') el.style.boxShadow = ""; 
+                el.className = `node ${status}`;
+            }
+        }
+        
+        function appendResult(id) {
+            document.getElementById('result-box').innerText += id + " ";
+        }
+
+        function setButtonsDisabled(disabled) {
+            isTraversing = disabled;
+            document.querySelectorAll('.panel button').forEach(btn => {
+                if(btn.id !== 'btn-reset') btn.disabled = disabled;
+            });
+            document.getElementById('node-val').disabled = disabled;
+        }
+
+        function resetVisuals() {
+            currentRunId++; // 中断异步
+            logMsg("已就绪。请编辑树或开始遍历。");
+            document.getElementById('result-box').innerText = "";
+            setButtonsDisabled(false);
+            drawTree(); // 重绘会清理掉所有的 active/visited/done 类名
+        }
+        
+        function resetAndDraw() {
+            selectedNodeId = null;
+            document.getElementById('selected-id').innerText = '无';
+            resetVisuals();
+        }
+
+        async function traverse(nodeId, type, runId) {
+            if (runId !== currentRunId) return;
+            if (!nodeId) return;
+
+            const node = treeData[nodeId];
+
+            logMsg(`来到节点 [${nodeId}]`);
+            setNodeStatus(nodeId, 'active');
+            await sleep();
+            if (runId !== currentRunId) return;
+
+            if (type === 'pre') {
+                logMsg(`【前序】记录节点 [${nodeId}]`);
+                setNodeStatus(nodeId, 'visited');
+                appendResult(nodeId);
+                await sleep();
+                if (runId !== currentRunId) return;
+            }
+
+            if(node.left) {
+                logMsg(`深入 [${nodeId}] 的左子树...`);
+                await sleep();
+                await traverse(node.left, type, runId);
+                if (runId !== currentRunId) return;
+                logMsg(`退回到节点 [${nodeId}]`);
+                setNodeStatus(nodeId, 'active');
+                await sleep();
+            }
+
+            if (type === 'in') {
+                logMsg(`【中序】记录节点 [${nodeId}]`);
+                setNodeStatus(nodeId, 'visited');
+                appendResult(nodeId);
+                await sleep();
+                if (runId !== currentRunId) return;
+            }
+
+            if(node.right) {
+                logMsg(`深入 [${nodeId}] 的右子树...`);
+                await sleep();
+                await traverse(node.right, type, runId);
+                if (runId !== currentRunId) return;
+                logMsg(`退回到节点 [${nodeId}]`);
+                setNodeStatus(nodeId, 'active');
+                await sleep();
+            }
+
+            if (type === 'post') {
+                logMsg(`【后序】记录节点 [${nodeId}]`);
+                setNodeStatus(nodeId, 'visited');
+                appendResult(nodeId);
+                await sleep();
+                if (runId !== currentRunId) return;
+            }
+
+            setNodeStatus(nodeId, 'done');
+        }
+
+        async function startTraversal(type) {
+            resetVisuals();
+            setButtonsDisabled(true);
+            // 强行清除蓝色的选中状态，以免视觉干扰
+            selectedNodeId = null; 
+            document.getElementById('selected-id').innerText = '无';
+            drawTree(); 
+            
+            const runId = currentRunId;
+            logMsg("遍历开始！");
+            await sleep();
+            
+            await traverse(rootId, type, runId);
+            
+            if (runId === currentRunId) {
+                logMsg("✅ 遍历彻底完成！");
+                setButtonsDisabled(false);
+            }
+        }
+
+        // 页面加载完毕执行
+        window.onload = loadDefaultTree;
+    </script>
+
+</body>
+</html>
