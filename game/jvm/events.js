@@ -23,7 +23,7 @@ function tickEventSystem() {
     
     // 如果进入 Boss 战，事件间隔被固定覆盖为 10 秒
     if (typeof activeBoss !== 'undefined' && activeBoss !== null) {
-        let limit = window.bossPhase2 ? 3000 : 10000;
+        let limit = window.bossPhase2 ? 5000 : 10000;
         if (eventTimeRemaining > limit) eventTimeRemaining = limit;
     }
     
