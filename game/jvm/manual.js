@@ -150,7 +150,7 @@ function switchManualTab(tabName, btnElement) {
                     <li><strong style="color: #00ff00">Healer：</strong> 高频率为整个阵列的其他模块恢复 500 点血量，不尽早击毁会导致 Boss 长久存活。</li>
                     <li><strong style="color: #ff0000">Cannon：</strong> 周期性向周围无死角发射高危致命弹幕。</li>
                     <li><strong style="color: #00ffff">Shielder：</strong> 定期在 Boss 周边生成极高血量的坚硬实体防弹壁垒，阻挡你的火力。</li>
-                    <li><strong style="color: #ff4d4d">狂暴二阶段：</strong> 如果你成功敲掉了所有的防卫模块（独剩核心），底层事件系统将进入失控暴走——场外事件触发间隔强制缩短至极短的 <span style="color:#ffcc00; font-weight:bold;">3秒</span>！</li>
+                    <li><strong style="color: #ff4d4d">狂暴二阶段：</strong> 如果你成功敲掉了所有的防卫模块（独剩核心），底层事件系统将进入失控暴走——场外事件触发间隔强制缩短至的 <span style="color:#ffcc00; font-weight:bold;">5秒</span>！</li>
                 </ul>
             </div>
         `;
