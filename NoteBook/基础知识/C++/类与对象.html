@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基础知识/类与对象</title>
+    <!-- 引入不蒜子核心脚本 -->
+    <script src="//cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script>
+</head>
+<style>
+    /* 1. 定义赛博朋克风格的全局霓虹色变量 */
+    :root {
+        --bg-main: #0d1117;
+        /* 极深邃的背景黑 */
+        --panel-bg: rgba(22, 27, 34, 0.6);
+        /* 半透明面板层 */
+        --text-main: #c9d1d9;
+        /* 柔和的护眼灰白 */
+        --neon-cyan: #58a6ff;
+        /* 霓虹青（用于链接） */
+        --neon-purple: #bc8cff;
+        /* 霓虹紫（用于强调） */
+        --neon-green: #3fb950;
+        /* 霓虹绿（用于引用） */
+    }
+
+    /* 2. 页面基础设置与微光背景 */
+    body {
+        background-color: var(--bg-main);
+        /* 在右上角打一束极其微弱的径向渐变蓝光，打破纯黑的死板 */
+        background-image: radial-gradient(circle at top right, #1f2937, transparent 500px);
+        color: var(--text-main);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.7;
+        margin: 0;
+        padding: 40px 20px;
+        /* 确保主体内容居中 */
+    }
+
+    /* 1. 行内代码块样式 */
+    code {
+        color: #add8e6;
+        /* 浅蓝色 */
+        background-color: transparent;
+        /* 背景完全透明 */
+        font-family: Consolas, Monaco, 'Courier New', monospace;
+        padding: 0.2em 0.4em;
+    }
+
+    /* 排除被 Pygments 渲染的多行代码块中的 code，避免干扰 */
+    .source-code code,
+    .source-code pre {
+        color: inherit;
+        background-color: transparent !important;
+        padding: 0;
+    }
+
+    /* 2. 多行代码块容器样式 */
+    /* 去除所有嵌套容器的背景和边框，只保留最外层你自定义的背景（如有） */
+    .source-code,
+    .source-code table,
+    .source-code tbody,
+    .source-code tr,
+    .source-code td,
+    .source-code pre {
+        background-color: transparent !important;
+        border: none !important;
+        margin: 0;
+    }
+
+    /* 修复多出大块空白问题：阻断全局表格的宽占位 */
+    .source-code table {
+        width: auto !important;
+        table-layout: auto !important;
+    }
+    .source-code td.code {
+        width: 100% !important; /* 让代码部分占据剩余空间 */
+    }
+
+    /* 修复代码缩进太大：去除继承自全局表格的巨大 padding */
+    .source-code td {
+        padding: 0 !important;
+    }
+
+    /* 设置代码区域侧边距 */
+    .source-code .code pre {
+        padding-left: 12px !important;
+        tab-size: 4;
+        -moz-tab-size: 4;
+    }
+    
+    /* 新增：代码缩进参考线 (由 JS 动态生成) */
+    .indent-guide {
+        border-left: 1px solid rgba(255, 255, 255, 0.12);
+        margin-right: -1px; /* 抵消边框宽度，避免将后面的代码向右挤压 */
+    }
+
+    /* 3. 行号定制 (不居中、深蓝色、彻底去除隐性背景) */
+    .source-code .linenos, 
+    .source-code .linenos pre, 
+    .source-code .linenodiv,
+    .source-code .linenos .normal,
+    .source-code .linenos .special {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    .source-code .linenos {
+        color: #1e40af !important; /* 行号采用深蓝色 */
+        text-align: right !important; /* 靠右对齐（不居中） */
+        user-select: none;
+        padding-right: 12px !important; /* 缩小右侧间距 */
+        padding-left: 0 !important;
+        width: 1px !important; /* 强制行号列收缩到最窄，解决左侧大片空白 */
+        white-space: nowrap !important; /* 防止行号折行 */
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* 3. 主体内容容器：毛玻璃特效 */
+    /* 注意：你需要在你的 HTML 骨架 body 内套一层 <div class="container"> */
+    .container {
+        /* 1. 核心修复：使用 box-sizing 确保 padding 不会撑破 100% 宽度 */
+        box-sizing: border-box;
+
+        /* 2. 确保宽度自适应，max-width 只是上限 */
+        max-width: 900px;
+        width: 95%;
+        /* 在小屏幕上留出一点边距 */
+
+        margin: 0 auto;
+        background: var(--panel-bg);
+        padding: 70px 40px 40px;
+        /* 稍微缩小左右 padding 提高空间利用率 */
+        border-radius: 16px;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        position: relative;
+        overflow: hidden;
+        /* 防止内容（如表格）溢出卡片 */
+    }
+
+    /* 3. 针对表格和代码块的溢出处理，确保它们在小屏幕上可以横向滚动而不是撑开卡片 */
+    table,
+    .source-code {
+        max-width: 100%;
+        overflow-x: auto;
+        display: block;
+    }
+
+    /* 1. 定义终端光标闪烁动画 */
+    @keyframes blink {
+        50% {
+            opacity: 0;
+        }
+    }
+
+    /* 4. 酷炫的渐变色标题 */
+    h1,
+    h2,
+    h3 {
+        /* 从霓虹青到霓虹紫的线性渐变 */
+        background: linear-gradient(120deg, var(--neon-cyan), var(--neon-purple));
+        -webkit-background-clip: text;
+        /* 将背景裁剪到文字轮廓 */
+        -webkit-text-fill-color: transparent;
+        /* 隐藏原本的文字颜色 */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 10px;
+        margin-top: 1.5em;
+    }
+
+    /* 5. 带有滑动动画的超链接 */
+    a {
+        color: var(--neon-cyan);
+        text-decoration: none;
+        position: relative;
+        font-weight: 600;
+    }
+
+    /* 利用伪元素制作初始宽度为 0 的下划线 */
+    a::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        transform: scaleX(0);
+        height: 2px;
+        bottom: -2px;
+        left: 0;
+        background-color: var(--neon-cyan);
+        transform-origin: bottom right;
+        transition: transform 0.3s ease-out;
+        /* 动画过渡时间 */
+    }
+
+    /* 鼠标悬停时，下划线展开 */
+    a:hover::after {
+        transform: scaleX(1);
+        transform-origin: bottom left;
+    }
+
+    /* 6. 发光的黑客感引用块 */
+    blockquote {
+        border-left: 4px solid var(--neon-green);
+        background: linear-gradient(90deg, rgba(63, 185, 80, 0.1) 0%, transparent 100%);
+        margin: 1.5em 0;
+        padding: 15px 20px;
+        border-radius: 0 8px 8px 0;
+        color: #8b949e;
+    }
+
+    /* 7. Obsidian 语法 ==高亮== 的赛博渲染 */
+    mark {
+        background: rgba(188, 140, 255, 0.2);
+        color: var(--neon-purple);
+        padding: 2px 6px;
+        border-radius: 4px;
+        box-shadow: 0 0 10px rgba(188, 140, 255, 0.3);
+        /* 外发光光晕 */
+        font-weight: bold;
+    }
+
+    /* 8. 表格样式优化 */
+    table {
+        width: 100% !important;
+        /* 强制水平铺满 */
+        table-layout: auto;
+        /* 让内容自动分配空间，但总宽 100% */
+        border-collapse: collapse;
+        margin: 25px 0;
+        display: table;
+        /* ✅ 核心修改：恢复表格的原始显示属性 */
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 8px;
+        overflow: hidden;
+        /* 配合圆角使用 */
+    }
+
+    /* 3. 增强表格内部质感 */
+    th {
+        background-color: rgba(88, 166, 255, 0.1);
+        /* 霓虹青半透明 */
+        color: var(--neon-cyan);
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.85em;
+        letter-spacing: 1px;
+    }
+
+    td,
+    th {
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 14px 18px;
+        text-align: left;
+    }
+
+    /* 4. 隔行变色效果：增加层次感 */
+    tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.01);
+    }
+
+    tr:hover {
+        background-color: rgba(88, 166, 255, 0.05);
+        /* 鼠标悬停微亮 */
+    }
+
+    pre { line-height: 125%; }
+td.linenos .normal { color: #f1fa8c; background-color: #44475a; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #f1fa8c; background-color: #44475a; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #50fa7b; background-color: #6272a4; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #50fa7b; background-color: #6272a4; padding-left: 5px; padding-right: 5px; }
+.source-code .hll { background-color: #44475a }
+.source-code .c { color: #6272A4 } /* Comment */
+.source-code .err { color: #F8F8F2 } /* Error */
+.source-code .g { color: #F8F8F2 } /* Generic */
+.source-code .k { color: #FF79C6 } /* Keyword */
+.source-code .l { color: #F8F8F2 } /* Literal */
+.source-code .n { color: #F8F8F2 } /* Name */
+.source-code .o { color: #FF79C6 } /* Operator */
+.source-code .x { color: #F8F8F2 } /* Other */
+.source-code .p { color: #F8F8F2 } /* Punctuation */
+.source-code .ch { color: #6272A4 } /* Comment.Hashbang */
+.source-code .cm { color: #6272A4 } /* Comment.Multiline */
+.source-code .cp { color: #FF79C6 } /* Comment.Preproc */
+.source-code .cpf { color: #6272A4 } /* Comment.PreprocFile */
+.source-code .c1 { color: #6272A4 } /* Comment.Single */
+.source-code .cs { color: #6272A4 } /* Comment.Special */
+.source-code .gd { color: #8B080B } /* Generic.Deleted */
+.source-code .ge { color: #F8F8F2; text-decoration: underline } /* Generic.Emph */
+.source-code .ges { color: #F8F8F2; text-decoration: underline } /* Generic.EmphStrong */
+.source-code .gr { color: #F8F8F2 } /* Generic.Error */
+.source-code .gh { color: #F8F8F2; font-weight: bold } /* Generic.Heading */
+.source-code .gi { color: #F8F8F2; font-weight: bold } /* Generic.Inserted */
+.source-code .go { color: #44475A } /* Generic.Output */
+.source-code .gp { color: #F8F8F2 } /* Generic.Prompt */
+.source-code .gs { color: #F8F8F2 } /* Generic.Strong */
+.source-code .gu { color: #F8F8F2; font-weight: bold } /* Generic.Subheading */
+.source-code .gt { color: #F8F8F2 } /* Generic.Traceback */
+.source-code .kc { color: #FF79C6 } /* Keyword.Constant */
+.source-code .kd { color: #8BE9FD; font-style: italic } /* Keyword.Declaration */
+.source-code .kn { color: #FF79C6 } /* Keyword.Namespace */
+.source-code .kp { color: #FF79C6 } /* Keyword.Pseudo */
+.source-code .kr { color: #FF79C6 } /* Keyword.Reserved */
+.source-code .kt { color: #8BE9FD } /* Keyword.Type */
+.source-code .ld { color: #F8F8F2 } /* Literal.Date */
+.source-code .m { color: #FFB86C } /* Literal.Number */
+.source-code .s { color: #BD93F9 } /* Literal.String */
+.source-code .na { color: #50FA7B } /* Name.Attribute */
+.source-code .nb { color: #8BE9FD; font-style: italic } /* Name.Builtin */
+.source-code .nc { color: #50FA7B } /* Name.Class */
+.source-code .no { color: #F8F8F2 } /* Name.Constant */
+.source-code .nd { color: #F8F8F2 } /* Name.Decorator */
+.source-code .ni { color: #F8F8F2 } /* Name.Entity */
+.source-code .ne { color: #F8F8F2 } /* Name.Exception */
+.source-code .nf { color: #50FA7B } /* Name.Function */
+.source-code .nl { color: #8BE9FD; font-style: italic } /* Name.Label */
+.source-code .nn { color: #F8F8F2 } /* Name.Namespace */
+.source-code .nx { color: #F8F8F2 } /* Name.Other */
+.source-code .py { color: #F8F8F2 } /* Name.Property */
+.source-code .nt { color: #FF79C6 } /* Name.Tag */
+.source-code .nv { color: #8BE9FD; font-style: italic } /* Name.Variable */
+.source-code .ow { color: #FF79C6 } /* Operator.Word */
+.source-code .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.source-code .w { color: #F8F8F2 } /* Text.Whitespace */
+.source-code .mb { color: #FFB86C } /* Literal.Number.Bin */
+.source-code .mf { color: #FFB86C } /* Literal.Number.Float */
+.source-code .mh { color: #FFB86C } /* Literal.Number.Hex */
+.source-code .mi { color: #FFB86C } /* Literal.Number.Integer */
+.source-code .mo { color: #FFB86C } /* Literal.Number.Oct */
+.source-code .sa { color: #BD93F9 } /* Literal.String.Affix */
+.source-code .sb { color: #BD93F9 } /* Literal.String.Backtick */
+.source-code .sc { color: #BD93F9 } /* Literal.String.Char */
+.source-code .dl { color: #BD93F9 } /* Literal.String.Delimiter */
+.source-code .sd { color: #BD93F9 } /* Literal.String.Doc */
+.source-code .s2 { color: #BD93F9 } /* Literal.String.Double */
+.source-code .se { color: #BD93F9 } /* Literal.String.Escape */
+.source-code .sh { color: #BD93F9 } /* Literal.String.Heredoc */
+.source-code .si { color: #BD93F9 } /* Literal.String.Interpol */
+.source-code .sx { color: #BD93F9 } /* Literal.String.Other */
+.source-code .sr { color: #BD93F9 } /* Literal.String.Regex */
+.source-code .s1 { color: #BD93F9 } /* Literal.String.Single */
+.source-code .ss { color: #BD93F9 } /* Literal.String.Symbol */
+.source-code .bp { color: #F8F8F2; font-style: italic } /* Name.Builtin.Pseudo */
+.source-code .fm { color: #50FA7B } /* Name.Function.Magic */
+.source-code .vc { color: #8BE9FD; font-style: italic } /* Name.Variable.Class */
+.source-code .vg { color: #8BE9FD; font-style: italic } /* Name.Variable.Global */
+.source-code .vi { color: #8BE9FD; font-style: italic } /* Name.Variable.Instance */
+.source-code .vm { color: #8BE9FD; font-style: italic } /* Name.Variable.Magic */
+.source-code .il { color: #FFB86C } /* Literal.Number.Integer.Long */
+
+    /* 1. 重塑代码容器 */
+    .source-code {
+        /* 强制使用带透明度的极暗色，替代 monokai 的黄褐色 */
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        /* 极细的玻璃反光边框 */
+        border-radius: 10px;
+        /* 圆角 */
+        padding: 16px 20px !important;
+        /* 增加内边距让代码呼吸 */
+        margin: 1.5em 0;
+        /* 加入内阴影，制造出一种代码被“嵌”在屏幕里的物理深度感 */
+        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        overflow-x: auto;
+    }
+
+    /* 2. 优化字体排版 */
+    .source-code pre {
+        margin: 0;
+        /* 推荐几款极客最爱的等宽字体 */
+        font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+        font-size: 0.95em;
+        line-height: 1;
+    }
+
+    /* 3. 终极细节：赛博风自定义滚动条 (针对 WebKit 浏览器生效) */
+    .source-code::-webkit-scrollbar {
+        height: 8px;
+        /* 横向滚动条变细 */
+    }
+
+    .source-code::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+
+    .source-code::-webkit-scrollbar-thumb {
+        background: rgba(88, 166, 255, 0.3);
+        /* 使用你的 --neon-cyan 半透明 */
+        border-radius: 4px;
+    }
+
+    .source-code::-webkit-scrollbar-thumb:hover {
+        background: rgba(88, 166, 255, 0.8);
+        /* 鼠标悬停时亮起霓虹色 */
+    }
+
+    /* =========================================
+   飞入动画终极版：CSS 直接接管初始状态
+   ========================================= */
+
+    /* 1. 暴力初始化：容器内的所有子元素默认都是透明且下移的 */
+    .container>* {
+        opacity: 0;
+        transform: translateY(40px);
+        /* 贝塞尔曲线过渡 */
+        transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+            transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    /* 2. 触发状态：当 JS 贴上 is-visible 标签时，回到原位 */
+    .container>*.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* =========================================
+           环境微光：鼠标跟随动态光源
+           ========================================= */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        /* 核心修改： radial-gradient 的颜色转折点 */
+        background: radial-gradient(
+                /* 1. 将光晕半径从 600px 调小到 450px，让能量更聚焦 */
+                circle 450px at var(--mouse-x, 50vw) var(--mouse-y, 50vh),
+
+                /* 2. 刺眼内核：前 0% 到 20% 的区域，使用不透明度较高的青色 (0.3) */
+                rgba(88, 166, 255, 0.3) 0%,
+
+                /* 3. 过渡：从 20% 到 60% 快速衰减到极微弱的青色 (0.05) */
+                rgba(88, 166, 255, 0.05) 60%,
+
+                /* 4. 边缘：60% 往外完全透明 */
+                transparent 100%);
+        pointer-events: none;
+        z-index: -1;
+        will-change: background;
+    }
+
+    .card-header {
+        margin-bottom: 30px;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        padding-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8em;
+        color: rgba(201, 209, 217, 0.4);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--neon-green);
+        border-radius: 50%;
+        box-shadow: 0 0 8px var(--neon-green);
+    }
+
+    .cursor {
+        color: var(--neon-cyan);
+        animation: blink 1s step-end infinite;
+    }
+
+    /* =========================================
+   强化加粗文本 (Strong/Bold) 样式
+   ========================================= */
+    strong {
+        /* 1. 提升亮度：使用纯白色，与周围的灰白色文字形成对比 */
+        color: #ffffff;
+
+        /* 2. 增加字重：确保使用最高级别的粗细 */
+        font-weight: 800;
+
+        /* 3. 霓虹微光：给加粗文字增加一层非常淡的青色光晕，使其跃然纸上 */
+        text-shadow: 0 0 8px rgba(88, 166, 255, 0.3);
+
+        /* 4. 间距优化：稍微增加字母间距，防止粗体字显得太挤 */
+        letter-spacing: 0.5px;
+
+        /* 5. 装饰性下划线（可选）：如果想更醒目，可以加一条淡淡的虚线下划线 */
+        border-bottom: 1px dashed rgba(88, 166, 255, 0.2);
+    }
+
+    .metadata-panel {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(88, 166, 255, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 35px;
+        /* 与正文拉开距离 */
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        /* 让面板也带有飞入动画的初始状态 */
+    }
+
+    .meta-key {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7em;
+        color: var(--neon-cyan);
+        opacity: 0.6;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .meta-value {
+        font-size: 0.9em;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    .meta-value a {
+        color: var(--neon-green) !important;
+        text-shadow: 0 0 5px rgba(63, 185, 80, 0.3);
+    }
+
+    /* 图片外层容器，负责居中和间距 */
+    .img-wrapper {
+        display: flex;
+        justify-content: center;
+        margin: 30px 0;
+        width: 100%;
+    }
+
+    /* 图片本体样式 */
+    .img-wrapper img {
+        max-width: 100%;
+        /* 确保不会超出卡片宽度 */
+        height: auto;
+        border-radius: 12px;
+        border: 2px solid rgba(88, 166, 255, 0.2);
+        /* 霓虹青边框 */
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(88, 166, 255, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: zoom-in;
+    }
+
+    /* 鼠标悬停时轻微放大并加强光晕 */
+    .img-wrapper img:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 30px rgba(88, 166, 255, 0.3);
+        border-color: var(--neon-cyan);
+    }
+
+    /* 9. 不蒜子统计页脚样式 */
+    .analytics-footer {
+        margin-top: 50px;
+        padding-top: 20px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8em;
+        color: rgba(201, 209, 217, 0.4);
+    }
+    .analytics-footer .neon-text {
+        color: var(--neon-cyan);
+        font-weight: bold;
+        margin: 0 4px;
+        text-shadow: 0 0 5px rgba(88, 166, 255, 0.3);
+    }
+    .analytics-footer .divider {
+        color: rgba(255, 255, 255, 0.1);
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.05
+        });
+
+        document.querySelectorAll('.container > *').forEach(el => {
+            observer.observe(el);
+        });
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+        // --- 新增：鼠标微光追踪逻辑 ---
+        // 监听全局鼠标移动事件
+        document.addEventListener('mousemove', (e) => {
+            // 将鼠标的 X 和 Y 坐标（像素值）实时写入 body 的 CSS 变量中
+            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+        });
+
+        // --- 新增：精准代码缩进参考线 (JS 动态计算) ---
+        const TAB_SIZE = 4;
+        document.querySelectorAll('.source-code .code pre').forEach(pre => {
+            const lines = pre.innerHTML.split('\n');
+            const processedLines = lines.map(line => {
+                let newHtml = '';
+                let spaceCount = 0;
+                let inTag = false;
+                let i = 0;
+                
+                for (; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    // 跳过并保留高亮库生成的 HTML 标签（如 <span> ）
+                    if (char === '<') { inTag = true; newHtml += char; continue; }
+                    if (char === '>') { inTag = false; newHtml += char; continue; }
+                    if (inTag) { newHtml += char; continue; }
+                    
+                    // 精准处理行首的空格和制表符
+                    if (char === ' ') {
+                        spaceCount++;
+                        if (spaceCount % TAB_SIZE === 1) {
+                            // 每四个空格的开头插入一个带左边框的零宽字符
+                            newHtml += '<span class="indent-guide">&#8203;</span>';
+                        }
+                        newHtml += char;
+                    } else if (char === '\t') {
+                        if (spaceCount % TAB_SIZE === 0) {
+                            newHtml += '<span class="indent-guide">&#8203;</span>';
+                        }
+                        newHtml += char;
+                        spaceCount += TAB_SIZE;
+                    } else {
+                        // 只要遇到非空格的实质性代码字符，立刻停止处理，保证右侧不会有参考线
+                        break;
+                    }
+                }
+                // 拼接该行后续的所有代码
+                newHtml += line.slice(i);
+                return newHtml;
+            });
+            pre.innerHTML = processedLines.join('\n');
+        });
+
+        // --- 原有：飞入动画观察器逻辑 ---
+        const observer = new IntersectionObserver((entries) => {
+            // ... 保持原有代码不变 ...
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.05 });
+
+        document.querySelectorAll('.container > *').forEach(el => {
+            observer.observe(el);
+        });
+    });
+</script>
+
+<body>
+    <div class="container" data-file='基础知识/类与对象'>
+        <div class="card-header">
+            <span class="status-dot"></span>
+            <span class="path">NoteBook/基础知识/类与对象.md</span>
+            <span class="cursor">_</span>
+        </div>
+
+<h1>类的基本注意事项：</h1>
+<ol>
+<li>类的成员<strong>可以是变量，也可以是函数</strong>。</li>
+<li>类的<strong>成员变量也叫属性</strong>。</li>
+<li>类的<strong>成员函数也叫方法/行为</strong>，类的成员函数<strong>可以定义在类的外面</strong>（也可以在不同的文件中）。</li>
+<li>用类定义一个类的变量叫做<strong>创建（或实例化）一个对象</strong>。</li>
+<li>类的<strong>成员变量和成员函数的</strong>作用域和生命周期与<strong>对象的</strong>作用域和生命周期一致。</li>
+</ol>
+<h1>类的访问权限：</h1>
+<p>类的访问权限有三种，分别为<code>public</code>、<code>private</code>和<code>protected</code>，它们的访问权限有如下：</p>
+<ol>
+<li><code>public</code>：<strong>公有</strong>的成员<strong>可以在被外部访问。</strong></li>
+<li><code>private</code>：<strong>私有</strong>的成员<strong>无法被外部访问，只有类的内部可以访问，<mark>这个访问权限不会被继承给派生类。</mark></strong></li>
+<li><code>protected</code>：<strong>受保护</strong>的成员<strong>无法被外部访问，只能在类<mark>及其派生类</mark>的内部访问，</strong></li>
+</ol>
+<p>在默认情况下（不手动设置访问权限），类的成员均被初始化为<code>private</code>，而在结构体中，其成员初始为<code>public</code>。</p>
+<h3>设置访问权限的方法：</h3>
+<p>在类中，使用权限关键字+冒号的方式来设置访问权限，在该标识之下的所有成员，其访问权限都会被重设为指定的类型，例如：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="class Example{
+	int a;//默认的访问权限是private，故a是私有的
+public:
+	int b;//在public之下，故b是共有的
+protected:
+	int c;//被protected覆盖，故c是受保护的
+};
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Example</span><span class="p">{</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span><span class="c1">//默认的访问权限是private，故a是私有的</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">b</span><span class="p">;</span><span class="c1">//在public之下，故b是共有的</span>
+<span class="k">protected</span><span class="o">:</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="p">;</span><span class="c1">//被protected覆盖，故c是受保护的</span>
+<span class="p">};</span>
+</pre></div></td></tr></table></div>
+</div>
+<h1>类的简单使用：</h1>
+<ol>
+<li>类的成员可以是<strong>任意</strong>数据类型（<strong>包括类、指针、结构体、枚举</strong>）</li>
+<li>在<strong>C++11标准</strong>中，可以为类的成员指定缺省值。</li>
+<li><strong>使用<code>new</code>动态创建对象，使用<code>delete</code>释放对象</strong>。</li>
+<li>不建议在外部读写类的属性（即<strong>不建议将类的属性声明为<code>public</code></strong>），而<strong>应该实现用于读写属性的方法，来间接访问。</strong></li>
+<li>如果需要一个只是<strong>纯粹的数据</strong>的自定义类型，建议使用结构体，而当需要实现<strong>对自定义类型自身的特殊操作</strong>时，建议使用类。</li>
+</ol>
+<p><strong>注意：</strong> 如果一个成员函数在类中被实现，其将自动成为内联函数，而在类的外部用<code>::</code>解析符定义的成员函数，则会是一个普通函数（也可加上<code>inline</code>限定符来使之成为内联函数）。</p>
+<h1>构造函数和析构函数：</h1>
+<ul>
+<li><strong><mark>构造函数</mark>：</strong> 在创建对象<strong>时</strong>，自动调用构造函数来对该对象<strong>进行初始化</strong>。</li>
+<li><strong><mark>析构函数</mark>：</strong> 在对象被销毁<strong>前</strong>，自动调用析构函数完成该对象的<strong>清理操作</strong>。（当类中用到动态分配内存时，需要自定义释放方法）。</li>
+</ul>
+<h3>1. 构造函数：</h3>
+<p>编写构造函数的语法如下：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="类名(参数列表){初始化语句}//不需要写返回值类型，也没有返回值
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><span class="n">类名</span><span class="p">(</span><span class="n">参数列表</span><span class="p">){</span><span class="n">初始化语句</span><span class="p">}</span><span class="c1">//不需要写返回值类型，也没有返回值</span>
+</pre></div></td></tr></table></div>
+</div>
+<p>没有参数的构造函数也叫做默认构造函数。</p>
+<p><strong>注意：</strong></p>
+<ol>
+<li>构造函数需要在外部调用，其<strong>访问权限必须是<code>public</code></strong></li>
+<li>构造函数名需要自动化执行，其<strong>函数名必须与类名完全一致。</strong></li>
+<li><strong>不能手动调用</strong>，只会在创建对象时被自动调用一次。</li>
+</ol>
+<h2>2. 析构函数</h2>
+<p>编写析构函数的语法如下：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="~类名(参数列表){释放语句}//同样的，也没有返回值，不需要写返回值类型
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><span class="o">~</span><span class="n">类名</span><span class="p">(</span><span class="n">参数列表</span><span class="p">){</span><span class="n">释放语句</span><span class="p">}</span><span class="c1">//同样的，也没有返回值，不需要写返回值类型</span>
+</pre></div></td></tr></table></div>
+</div>
+<p><strong>注意：</strong></p>
+<ol>
+<li>与构造函数一样，<strong>访问权限也必须是<code>public</code></strong>，<strong>函数名也必须与类名完全一致</strong>。</li>
+<li>前面的<code>~</code>是区分构造函数与析构函数的标志，<strong>不能省略</strong>。</li>
+<li>析构函数<strong>没有参数，不能重载</strong>。</li>
+<li>析构函数在对象被销毁（<strong><code>delete</code>或程序终止时的自动资源释放</strong>）的时候会被自动调用一次，但析构函数<strong>也可以使用<code>类名.~类名()</code>来手动调用</strong>。</li>
+</ol>
+<h1>构造函数和析构函数的细节：</h1>
+<ol>
+<li>如果没有为类提供构造函数或析构函数，那么编译器会<strong>自动提供一个空的默认构造函数或析构函数</strong>；而<mark><strong>如果提供了，那么编译器将不会为其提供空的构造函数</strong></mark>。在提供了析构函数的情况下，直接用<code>类名 对象名;</code>的不带括号的创建方式将会出现”<strong><mark>没有合适的默认构造函数可用</mark></strong>“的提示。</li>
+<li>如果类有无参数的构造函数，在创建对象时，<strong>不要在对象后面加上括号，而应使用<code>类名 对象名;</code>的方法来创建。</strong>
+    因为对于<code>类名 对象名();</code>这个语句，<mark><strong>编译器会将其解释为声明一个没有参数、返回值类型为该类函数。</strong></mark></li>
+<li><code>类名();</code>的意思<mark><strong>不是调用该类的构造函数，而是创建了一个该类的匿名对象/临时对象</strong></mark>，<strong>这个对象没有名字，在运行完其所在语句时，将会被立刻删除。</strong></li>
+<li>使用<code>new</code>创建对象时，会调用<strong>匹配的</strong>构造函数，<mark><strong>其返回的是指向新创建的对象的指针</strong></mark>；使用<code>delete</code>销毁对象时，会调用析构函数。</li>
+<li>不建议在构造和析构函数中写太多代码（因为没有返回值，无法只到运行的结果），<strong>如果有比较复杂的初始化/释放逻辑，可以额外创建一个方法来完成。</strong></li>
+<li><strong>在C++11标准</strong>中，允许使用<mark><strong>统一</mark>初始化列表</strong>来创建函数，例如<code>类名 对象名 = {参数一,参数二}</code>等价于<code>类名 对象名(参数一,参数二)</code>。</li>
+<li><mark><strong>如果类的成员也是类，创建对象的时候，先构造成员类；销毁对象时，先析构成员类。</strong></mark></li>
+</ol>
+<h1>拷贝对象：</h1>
+<p>如果已经有了一个对象，想要复制一个，那么可以使用拷贝操作。拷贝操作有两种形式：</p>
+<ol>
+<li><code>类名 新对象名(已存在的对象名)</code>：调用了拷贝构造函数</li>
+<li><code>类名 新对象名 = 已存在的对象名</code>：直接把原对象赋值给了新对象</li>
+</ol>
+<h2>拷贝构造函数：</h2>
+<p>默认情况下，<strong>如果没有提供<mark>默认的</mark>拷贝构造函数</strong>，那么编译器会提供一个默认的拷贝构造函数，它的作用是<strong>将已存在对象的成员变量原封不动地复制给新对象。</strong></p>
+<p>编写拷贝构造函数的语法如下：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="类名(const 类名&amp; 对象参数名,其他参数列表){拷贝操作}//实际上就是一个重载的构造函数
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><span class="n">类名</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">类名</span><span class="o">&amp;</span><span class="w"> </span><span class="n">对象参数名</span><span class="p">,</span><span class="n">其他参数列表</span><span class="p">){</span><span class="n">拷贝操作</span><span class="p">}</span><span class="c1">//实际上就是一个重载的构造函数</span>
+</pre></div></td></tr></table></div>
+</div>
+<p>没有其它参数列表的拷贝构造函数被称为默认拷贝构造函数，<mark><strong>无论如何，都会有一个默认拷贝构造函数在类中</strong></mark>（无论是自己定义的还是编译器提供的，重载的拷贝构造函数的定义不会影响编译器提供默认拷贝构造函数）。 ^03b312</p>
+<p><strong>注意：</strong></p>
+<ul>
+<li><mark><strong>【使用MSVC编译器的情况下】</strong></mark>如果一个函数的参数为是以值传递的类对象，那么<strong>在复制参数时，会调用拷贝构造函数来进行复制操作</strong>。所以说，如果拷贝构造函数里夹带了私货，那么在传值是实际起作用的是被塞了私货的对象。
+    <mark><strong>【使用g++编译器的情况下】</strong></mark>同样进行上述操作时，<strong>g++认为不需要复制一个新的对象，直接换一个变量名继续用即可</strong>，两者的地址是完全一致的，相当于引用。</li>
+<li><strong>其他注意事项与常规构造函数一致。</strong></li>
+</ul>
+<h2>浅拷贝与深拷贝：</h2>
+<p><strong>假设类的属性中有指针变量</strong>，那么在拷贝时如果直接将已存在对象的所有属性都复制给新对象，那么就<strong>会导致这两个对象中的这一指针变量指向同一片内存区域，<mark>一个对象对这个区域的修改将会影响到另一个对象。</mark></strong></p>
+<p><mark><strong>更加危险的是，如果在析构函数中释放了这个指针，那么当一个对象释放时，该指针会被释放掉，另一个对象的该指针就变成了野指针，对这个野指针进行释放，会直接导致程序发生致命错误而崩溃！</strong></mark></p>
+<p>以上的问题被称为<mark><strong>浅拷贝</strong></mark>。</p>
+<h3>深拷贝：</h3>
+<p>要解决这个问题，做法非常简单，<strong>不要使用编译器提供的默认拷贝构造函数，使用自定义的拷贝构造函数来进行特殊拷贝。</strong></p>
+<ul>
+<li>对于普通的数据，直接复制即可。</li>
+<li><strong>对于指针或者引用变量这样特殊的数据，可以考虑使用<code>memcpy(目标指针,源指针,内存大小)</code>来复制。</strong></li>
+</ul>
+<p>这样的操作被称为<mark><strong>深拷贝</strong></mark>。</p>
+<h1>初始化列表：</h1>
+<p>前面提到了一个用于创建对象的统一初始化列表，哪个是C++11新增的，而此处的初始化列表是C++最初就有的，两者不是一个概念。</p>
+<p>初始化列表的语法如下：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="变量名(参数列表):成员1(初始值1),成员二(初始值2),……
+//初始值可以是常量，也可以是形参或者表达式
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><span class="n">变量名</span><span class="p">(</span><span class="n">参数列表</span><span class="p">)</span><span class="o">:</span><span class="n">成员1</span><span class="p">(</span><span class="n">初始值1</span><span class="p">),</span><span class="n">成员二</span><span class="p">(</span><span class="n">初始值2</span><span class="p">),</span><span class="err">……</span>
+<span class="c1">//初始值可以是常量，也可以是形参或者表达式</span>
+</pre></div></td></tr></table></div>
+</div>
+<p>在调用该函数的时候，会将成员初始化为括号内指定的值。</p>
+<h3>为什么要使用初始化列表？</h3>
+<ol>
+<li>对于类对象参数来说，如果以值传递且初始化操作放在函数体内，那么会<strong>调用类的普通构造函数</strong>创建一个实参再用这个实参进行初始化，<strong>这是两步操作</strong>；而如果使用初始化列表进行初始化，那么将会<strong>调用类的拷贝构造函数</strong>直接将传递的类对象拷贝给成员，<strong>这是一步操作</strong>。<mark><strong>因此在初始化类的情况下效率更高。</strong></mark></li>
+<li>如果类的属性是常量或者引用，由于<strong>常量和引用必须在创建时初始化</strong>，所以在函数体内初始化的操作由于创建和赋值分离会有“<mark><strong>必须在创建时初始化</strong></mark>”的报错，而初始化列表由于是一步完成的，所以能够对常量和引用进行初始化。<mark><strong>因此在初始化常量或引用的情况下，必须使用初始化列表。</strong></mark></li>
+</ol>
+<p><strong>注意：</strong></p>
+<ul>
+<li><strong>如果初始化的类没有默认构造函数（即没有参数的构造函数）</strong>，那么会由于无法创建空对象而报错，更别说赋值了。<strong>在这种情况下，必须使用初始化列表，因为<a href="类与对象#^03b312">所有类都一定会有拷贝构造函数</a>。</strong></li>
+</ul>
+<h1><code>const</code>与<code>mutable</code>：</h1>
+<p><code>const</code>修饰的成员函数不能修改<strong>非<code>mutable</code>的成员变量</strong>，使用语法如下：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="mutable 变量类型名 变量名;//这是一个mutable修饰的成员变量
+返回值类型名 函数名() const {函数体};
+//这是一个const修饰的成员函数，它只能对mutable修饰的变量进行更改
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><span class="k">mutable</span><span class="w"> </span><span class="n">变量类型名</span><span class="w"> </span><span class="n">变量名</span><span class="p">;</span><span class="c1">//这是一个mutable修饰的成员变量</span>
+<span class="n">返回值类型名</span><span class="w"> </span><span class="nf">函数名</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="n">函数体</span><span class="p">};</span>
+<span class="c1">//这是一个const修饰的成员函数，它只能对mutable修饰的变量进行更改</span>
+</pre></div></td></tr></table></div>
+</div>
+<p>同时，<code>const</code>修饰符还会<strong>影响访问权限</strong>：<strong><code>const</code>方法和<code>const</code>修饰的类对象</strong>只能访问类中的<code>const</code>方法（属性可以正常访问，但不能修改），而不能访问其非<code>const</code>方法。</p>
+<p><strong><em>注意：构造和析构函数不能被<code>const</code>修饰。</em></strong></p>
+<h1><code>this</code>指针：</h1>
+<p><code>this</code>是一个指向对象本身的指针，在调用类方法时，<code>this</code>会作为隐藏参数传递给类方法，对其解指针即可得到对象本身。</p>
+<h1>静态成员：</h1>
+<p>与C语言一样，<code>static</code>修饰的类成员将被储存在静态储存区中，即便其定义在类中，也可以在全局通过作用域解析运算符来访问，这个操作不需要创建对象，静态的成员在整个程序间共享，例如：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="class Example{
+public://调整为公有来外部访问
+	static int a;
+	static int getValue(){
+		return a;
+	}
+};
+
+int Example::a=9;//静态成员必须在全局作用域中进行初始化
+
+int main(){
+	cout&lt;&lt;Example::getValue()&lt;&lt;endl;//输出9，不创建对象也可以使用
+	Example::a=6;//将其改为6
+	cout&lt;&lt;Example::getValue()&lt;&lt;endl;//输出6，a被全局改变
+	Example test;
+	cout&lt;&lt;test.getValue()&lt;&lt;endl;//也会输出6（值被全局变更），对象也可以访问
+}
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Example</span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span><span class="c1">//调整为公有来外部访问</span>
+<span class="w">	</span><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">	</span><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">getValue</span><span class="p">(){</span>
+<span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="n">Example</span><span class="o">::</span><span class="n">a</span><span class="o">=</span><span class="mi">9</span><span class="p">;</span><span class="c1">//静态成员必须在全局作用域中进行初始化</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(){</span>
+<span class="w">	</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">Example</span><span class="o">::</span><span class="n">getValue</span><span class="p">()</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span><span class="c1">//输出9，不创建对象也可以使用</span>
+<span class="w">	</span><span class="n">Example</span><span class="o">::</span><span class="n">a</span><span class="o">=</span><span class="mi">6</span><span class="p">;</span><span class="c1">//将其改为6</span>
+<span class="w">	</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">Example</span><span class="o">::</span><span class="n">getValue</span><span class="p">()</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span><span class="c1">//输出6，a被全局改变</span>
+<span class="w">	</span><span class="n">Example</span><span class="w"> </span><span class="n">test</span><span class="p">;</span>
+<span class="w">	</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">test</span><span class="p">.</span><span class="n">getValue</span><span class="p">()</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span><span class="c1">//也会输出6（值被全局变更），对象也可以访问</span>
+<span class="p">}</span>
+</pre></div></td></tr></table></div>
+</div>
+<p><strong>注意：</strong></p>
+<ol>
+<li><mark><strong>静态的成员与类独立</strong></mark>，且在全局中只有一份。</li>
+<li>静态成员函数<strong>只能访问静态成员</strong>，不能访问非静态成员。</li>
+<li>静态成员函数<strong>没有<code>this</code>指针</strong>，静态成员函数不属于某一特定对象。</li>
+<li><strong>私有静态成员无法在外部访问</strong>（仍然可以在全局作用域中初始化）。</li>
+</ol>
+<h1>友元：</h1>
+<p>类的私有成员无法被外部访问，但我们可以主动为某些函数或类开后门，让它们称为友元，从而获得对私有成员的访问权限。</p>
+<h3>友元全局函数：</h3>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="class Example{
+friend int getValue(const Example eg);//表示有这样一个函数是此类的友元
+private:
+	int a;
+public:
+	Example(){
+		a=0;
+	}
+};
+
+int getValue(const Example&amp; eg){
+	return eg.a;
+}
+
+int main(){
+	Example eg;
+	cout&lt;&lt;eg.a;//没有权限，不能访问私有成员
+	cout&lt;&lt;getValue(eg);//虽然不在类中，但此函数是类的友元，他可以访问私有成员
+}
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Example</span><span class="p">{</span>
+<span class="k">friend</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">getValue</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Example</span><span class="w"> </span><span class="n">eg</span><span class="p">);</span><span class="c1">//表示有这样一个函数是此类的友元</span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">	</span><span class="n">Example</span><span class="p">(){</span>
+<span class="w">		</span><span class="n">a</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">getValue</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Example</span><span class="o">&amp;</span><span class="w"> </span><span class="n">eg</span><span class="p">){</span>
+<span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">eg</span><span class="p">.</span><span class="n">a</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(){</span>
+<span class="w">	</span><span class="n">Example</span><span class="w"> </span><span class="n">eg</span><span class="p">;</span>
+<span class="w">	</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">eg</span><span class="p">.</span><span class="n">a</span><span class="p">;</span><span class="c1">//没有权限，不能访问私有成员</span>
+<span class="w">	</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">getValue</span><span class="p">(</span><span class="n">eg</span><span class="p">);</span><span class="c1">//虽然不在类中，但此函数是类的友元，他可以访问私有成员</span>
+<span class="p">}</span>
+</pre></div></td></tr></table></div>
+</div>
+<h3>友元类：</h3>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="class Example{
+friend class FriendExample;//声明FriendExample类是此类的友元
+private:
+	int a;
+public:
+	Example(){
+		a=0;
+	}
+};
+
+class FriendExample{
+public:
+	int getValue(const Example&amp; eg){
+		return eg.a;//FriendExample是Example的友元类，可以访问私有成员
+	}
+};
+
+int main(){
+	Example eg;
+	FriendExample feg;
+	cout&lt;&lt;feg.getValue(eg)&lt;&lt;endl;
+}
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span></pre></div></td><td class="code"><div><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Example</span><span class="p">{</span>
+<span class="k">friend</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">FriendExample</span><span class="p">;</span><span class="c1">//声明FriendExample类是此类的友元</span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">	</span><span class="n">Example</span><span class="p">(){</span>
+<span class="w">		</span><span class="n">a</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FriendExample</span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">getValue</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Example</span><span class="o">&amp;</span><span class="w"> </span><span class="n">eg</span><span class="p">){</span>
+<span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="n">eg</span><span class="p">.</span><span class="n">a</span><span class="p">;</span><span class="c1">//FriendExample是Example的友元类，可以访问私有成员</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(){</span>
+<span class="w">	</span><span class="n">Example</span><span class="w"> </span><span class="n">eg</span><span class="p">;</span>
+<span class="w">	</span><span class="n">FriendExample</span><span class="w"> </span><span class="n">feg</span><span class="p">;</span>
+<span class="w">	</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">feg</span><span class="p">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">eg</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div></td></tr></table></div>
+</div>
+<h3>友元成员函数：</h3>
+<p>最麻烦的一个，先看代码：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="class Example;
+
+class Other{
+public:
+	int getValue(const Example&amp; eg); 
+};
+
+class Example{
+	friend int Other::getValue(const Example&amp; eg);
+	int a;
+public:
+	Example(){
+		a=0;
+	}
+};
+
+int Other::getValue(const Example&amp; eg){
+	return eg.a;
+}
+
+int main(){
+	Example eg;
+	Other ot;
+	cout&lt;&lt;ot.getValue(eg)&lt;&lt;endl;
+}
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span></pre></div></td><td class="code"><div><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Example</span><span class="p">;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Other</span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">getValue</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Example</span><span class="o">&amp;</span><span class="w"> </span><span class="n">eg</span><span class="p">);</span><span class="w"> </span>
+<span class="p">};</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Example</span><span class="p">{</span>
+<span class="w">	</span><span class="k">friend</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">Other::getValue</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Example</span><span class="o">&amp;</span><span class="w"> </span><span class="n">eg</span><span class="p">);</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">	</span><span class="n">Example</span><span class="p">(){</span>
+<span class="w">		</span><span class="n">a</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">Other::getValue</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Example</span><span class="o">&amp;</span><span class="w"> </span><span class="n">eg</span><span class="p">){</span>
+<span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">eg</span><span class="p">.</span><span class="n">a</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(){</span>
+<span class="w">	</span><span class="n">Example</span><span class="w"> </span><span class="n">eg</span><span class="p">;</span>
+<span class="w">	</span><span class="n">Other</span><span class="w"> </span><span class="n">ot</span><span class="p">;</span>
+<span class="w">	</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">ot</span><span class="p">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">eg</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div></td></tr></table></div>
+</div>
+<p><strong>槽点：</strong></p>
+<ol>
+<li>因为友元函数访问视其为友元类必须传入一个类对象的引用，所以需要这个类在友元函数所在类之前定义，而要声明该函数是一个类的友元函数，需要这个友元函数所在类在这个类之前定义？<strong>所以既要满足包含友元函数的<code>Other</code>类在<code>Example</code>类之前定义（为了进行友元声明），又要满足<code>Example</code>类在<code>Other</code>类之前定义（为了传入<code>Example</code>对象的引用）？</strong>
+    <strong><mark>-&gt;使用前向声明，令<code>Other</code>知晓<code>Example</code>的存在</mark></strong></li>
+<li>因为友元函数的声明必须在友元函数实现之前，所以在能满足上面条件的情况下，<strong>还要让<code>getValue</code>方法在<code>Example</code>之下实现？</strong>
+    <mark><strong>-&gt;将<code>getValue</code>函数的实现分离出来，放到<code>Example</code>的下面</strong></mark></li>
+</ol>
+<h2>声明友元成员函数的步骤：</h2>
+<ol>
+<li>将声明所在类进行前向声明。</li>
+<li>将友元成员函数所在类的定义放在前向声明和声明所在类的定义之间。</li>
+<li>将友元成员函数的实现从类中分离，放到声明所在类下方。</li>
+<li>在声明所在类中写下友元声明语句（包含作用域解析符）。</li>
+</ol>
+<h2>注意事项：</h2>
+<ol>
+<li>友元关系<strong>无法被继承</strong>。</li>
+<li>友元关系是<strong>单向的</strong>（<em>我不是我友元的友元</em>）</li>
+</ol>
+<h1>自动类型转换：</h1>
+<p><strong>类的构造函数还可以用作类型转换</strong>，如果一个构造函数只有一个参数，那么它可以被视为转换函数，<strong>当尝试将与参数类型相同的量赋给类对象的时候，会自动调用这个构造函数来创建对象</strong>，例如：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="class Example{
+	int a;
+public:
+	Example(int a){
+		this-&gt;a=a;
+	}
+};
+
+int main(){
+	Example test=6;//等价于Example test(6);
+	Example test=6.6;
+	//先将double的6.6转换成int的6（截断），再调用构造函数
+	//等价于Example test((int)6.6)
+}
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Example</span><span class="p">{</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">	</span><span class="n">Example</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">){</span>
+<span class="w">		</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">;</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(){</span>
+<span class="w">	</span><span class="n">Example</span><span class="w"> </span><span class="n">test</span><span class="o">=</span><span class="mi">6</span><span class="p">;</span><span class="c1">//等价于Example test(6);</span>
+<span class="w">	</span><span class="n">Example</span><span class="w"> </span><span class="n">test</span><span class="o">=</span><span class="mf">6.6</span><span class="p">;</span>
+<span class="w">	</span><span class="c1">//先将double的6.6转换成int的6（截断），再调用构造函数</span>
+<span class="w">	</span><span class="c1">//等价于Example test((int)6.6)</span>
+<span class="p">}</span>
+</pre></div></td></tr></table></div>
+</div>
+<p>感觉跟C++11的统一初始化列表差不多，<code>Example test=6</code>完全可以理解为<code>Example test={6}</code>，即将一个只有一个值的列表作为了统一初始化列表。</p>
+<p><strong>程序在任何类型不一致的时候下都会尝试触发这种自动类型转化</strong>，例如一个函数返回值类型为上面的<code>Example</code>但实际返回了6，那么就会触发自动类型转换。</p>
+<p><strong>如果希望一个构造函数不要被用于自动类型转换，可以为其加上<code>explicit（意为精确的）</code>修饰符</strong>，加上<code>explicit</code>修饰符的构造函数将不会被尝试用作自动类型转化，<strong>但如果使用强制类型转换，即便是<code>explicit</code>的构造函数也会被调用</strong>（例如<code>Example test=(Example)6;</code>）。</p>
+<h1>转换函数（将类转换成其他数据类型）</h1>
+<p>首先，<strong>转换函数不建议使用，更推荐使用普通的成员函数来实现对应功能</strong>（get这get那的那种函数），但作为原理之一还是应该了解。</p>
+<p>转换函数的语法如下：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="class Example{
+	int a;
+public:
+	Example(){
+		a=0;
+	}
+	operator int(){//不能写参数！！
+		return a;
+	}
+	int getA(){return a;};//真就不如这样写
+};
+
+int main(){
+	Example test;
+	int ta=test;//调用了转换函数，retuan了a
+	int ta=test.getA();//效果一样，而且还能传参数
+}
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Example</span><span class="p">{</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">	</span><span class="n">Example</span><span class="p">(){</span>
+<span class="w">		</span><span class="n">a</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="w">	</span><span class="k">operator</span><span class="w"> </span><span class="kt">int</span><span class="p">(){</span><span class="c1">//不能写参数！！</span>
+<span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">getA</span><span class="p">(){</span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="p">;};</span><span class="c1">//真就不如这样写</span>
+<span class="p">};</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(){</span>
+<span class="w">	</span><span class="n">Example</span><span class="w"> </span><span class="n">test</span><span class="p">;</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">ta</span><span class="o">=</span><span class="n">test</span><span class="p">;</span><span class="c1">//调用了转换函数，retuan了a</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">ta</span><span class="o">=</span><span class="n">test</span><span class="p">.</span><span class="n">getA</span><span class="p">();</span><span class="c1">//效果一样，而且还能传参数</span>
+<span class="p">}</span>
+</pre></div></td></tr></table></div>
+</div>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
+function copyCode(btn) {
+    const codeText = btn.getAttribute('data-code');
+    navigator.clipboard.writeText(codeText).then(() => {
+        const iconCopy = btn.querySelector('.icon-copy');
+        const iconCheck = btn.querySelector('.icon-check');
+        iconCopy.style.display = 'none';
+        iconCheck.style.display = 'inline-block';
+        btn.addEventListener('mouseleave', function onMouseLeave() {
+            iconCopy.style.display = 'inline-block';
+            iconCheck.style.display = 'none';
+            btn.removeEventListener('mouseleave', onMouseLeave);
+        });
+    });
+}
+</script>
+
+        <div class="analytics-footer">
+            <span id="busuanzi_container_site_pv" style="display: none;">
+                全站访问量 <span id="busuanzi_value_site_pv" class="neon-text"></span> 次
+            </span>
+            <span class="divider">|</span>
+            <span id="busuanzi_container_site_uv" style="display: none;">
+                总访客数 <span id="busuanzi_value_site_uv" class="neon-text"></span> 人
+            </span>
+            <span class="divider">|</span>
+            <span id="busuanzi_container_page_pv" style="display: none;">
+                本文阅读量 <span id="busuanzi_value_page_pv" class="neon-text"></span> 次
+            </span>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

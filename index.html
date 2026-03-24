@@ -1,442 +1,433 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JVM 觉醒：NPE 审判</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteBook - 知识库索引</title>
+    <!-- 引入不蒜子核心脚本 -->
+    <script src="//cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script>
     <style>
+        /* 1. 沿用赛博朋克风格的全局霓虹色变量 */
         :root {
-            --bg-color: #0c0e14;
-            --text-color: #abb2bf;
-            --primary-color: #61afef;
-            --error-color: #e06c75;
-            --warning-color: #d19a66;
-            --success-color: #98c379;
-            --jvm-color: #c678dd;
-            --font-main: 'Fira Code', Consolas, monospace;
+            --bg-main: #0d1117;
+            --panel-bg: rgba(22, 27, 34, 0.6);
+            --text-main: #c9d1d9;
+            --neon-cyan: #58a6ff;
+            --neon-purple: #bc8cff;
+            --neon-green: #3fb950;
         }
 
+        /* 2. 页面基础设置与微光背景 */
         body {
-            margin: 0; padding: 0; overflow: hidden;
-            background-color: var(--bg-color); color: var(--text-color);
-            font-family: var(--font-main); user-select: none; touch-action: none;
+            background-color: var(--bg-main);
+            background-image: radial-gradient(circle at top right, #1f2937, transparent 500px);
+            color: var(--text-main);
+            font-family: "JetBrains Mono", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.7;
+            margin: 0;
+            padding: 40px 20px;
         }
 
-        #game-container {
-            width: 100vw; height: 100vh; position: relative;
-            background: linear-gradient(180deg, #0c0e14 0%, #1a1e29 100%);
-            cursor: crosshair;
+        /* 3. 沿用毛玻璃面板 */
+        .container {
+            box-sizing: border-box;
+            max-width: 900px;
+            width: 95%;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            padding: 70px 40px 40px;
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
         }
 
-        #ui-layer {
-            position: absolute; top: 10px; left: 10px; right: 10px;
-            z-index: 100; pointer-events: none; display: flex; justify-content: space-between;
-            font-size: 12px;
-            display: none; /* 初始隐藏，开始游戏后显示 */
+        /* 飞入动画初始状态 */
+        .container > * {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .container > *.is-visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        .board {
-            padding: 4px 8px; background-color: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px;
+        /* 环境微光 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(
+                circle 450px at var(--mouse-x, 50vw) var(--mouse-y, 50vh),
+                rgba(88, 166, 255, 0.2) 0%,
+                rgba(88, 166, 255, 0.03) 60%,
+                transparent 100%
+            );
+            pointer-events: none;
+            z-index: -1;
+            will-change: background;
         }
 
-        #score { color: var(--success-color); font-weight: bold; }
-        #lives { color: var(--error-color); font-weight: bold; }
-
-        #execution-zone {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
-            background: linear-gradient(0deg, rgba(152, 195, 121, 0.15) 0%, transparent 100%);
-            border-top: 1px dashed var(--success-color);
-            color: var(--success-color); display: flex; align-items: flex-end; justify-content: center;
-            padding-bottom: 5px; font-size: 12px; opacity: 0.8; z-index: 10;
-            display: none; /* 初始隐藏 */
+        .card-header {
+            margin-bottom: 30px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8em;
+            color: rgba(201, 209, 217, 0.4);
         }
 
-        #player {
-            position: absolute; bottom: 70px;
-            width: 46px; height: 26px;
-            background-color: var(--jvm-color); color: #fff;
-            display: none; /* 初始隐藏 */
-            justify-content: center; align-items: center;
-            font-size: 12px; font-weight: bold; border-radius: 4px;
-            box-shadow: 0 0 10px var(--jvm-color);
-            transform: translateX(-50%); z-index: 50;
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--neon-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--neon-cyan);
         }
 
-        .code-block {
-            position: absolute; background-color: #1a1e29;
-            border-radius: 4px; padding: 6px; font-size: 11px;
-            white-space: pre; pointer-events: none; opacity: 0.95;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            display: flex; flex-direction: column;
+        @keyframes blink { 50% { opacity: 0; } }
+        .cursor { color: var(--neon-cyan); animation: blink 1s step-end infinite; }
+
+        /* ==================== 目录列表专属样式 ==================== */
+        .directory-wrapper {
+            margin-top: 20px;
         }
         
-        .hp-bar {
-            height: 3px; background-color: var(--error-color);
-            margin-bottom: 4px; width: 100%; transition: width 0.1s;
+        .folder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
-        .bullet {
-            position: absolute; font-size: 12px; font-weight: bold;
-            color: var(--error-color); text-shadow: 0 0 8px var(--error-color);
-            pointer-events: none; letter-spacing: 2px;
-            writing-mode: vertical-rl; text-orientation: mixed;
-            transform: translateY(-100%);
+        .folder-wrapper {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .error-explosion {
-            position: absolute; font-size: 9px; color: var(--error-color);
-            background-color: rgba(0, 0, 0, 0.8); border: 1px solid #555;
-            border-left: 3px solid var(--error-color);
-            border-radius: 3px; padding: 6px; pointer-events: none;
-            animation: errorFadeOut 2.5s ease-out forwards; z-index: 20;
-            white-space: pre-wrap;
-            text-align: left;
-            max-width: 280px;
-            line-height: 1.2;
+        .folder-wrapper:hover {
+            border-color: rgba(88, 166, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
-        @keyframes errorFadeOut {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            80% { opacity: 0.9; }
-            100% { transform: translateY(-30px) scale(0.9); opacity: 0; }
+        .folder-item {
+            padding: 14px 20px;
+            color: var(--neon-cyan);
+            font-weight: 700;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .folder-item:hover {
+            background: rgba(88, 166, 255, 0.08);
+            text-shadow: 0 0 8px rgba(88, 166, 255, 0.3);
+        }
+        .folder-item.open {
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+            color: var(--neon-purple);
+            text-shadow: 0 0 8px rgba(188, 140, 255, 0.3);
         }
 
-        /* 菜单屏幕通用样式 (开始/结束) */
-        .menu-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(12, 14, 20, 0.95);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 200; text-align: center; padding: 20px; box-sizing: border-box;
+        .folder-content {
+            display: none;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .folder-content.open {
+            display: block;
+            animation: fadeIn 0.4s ease;
         }
 
-        #start-screen h1 { font-size: 42px; color: var(--jvm-color); margin-bottom: 20px; text-shadow: 0 0 15px var(--jvm-color); }
-        #start-screen p { font-size: 16px; color: var(--text-color); max-width: 600px; line-height: 1.6; margin-bottom: 30px; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .svg-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        /* File Grid Layout */
+        .file-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .file-item {
+            flex: 1 1 240px; /* Grow to fill, base size 240px */
+            max-width: 100%;
+            background: rgba(22, 27, 34, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .file-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 6px 16px rgba(88, 166, 255, 0.15);
+        }
+
+        .file-title {
+            display: flex;
+            align-items: flex-start;
+            word-break: break-word;
+        }
         
-        #game-over-screen { display: none; }
-        #game-over-screen h1 { font-size: 36px; color: var(--error-color); margin-bottom: 10px; text-shadow: 0 0 15px var(--error-color); }
-        #game-over-screen p { font-size: 14px; margin: 5px 0; }
-
-        .action-btn {
-            background: none; border: 2px solid var(--primary-color);
-            color: var(--primary-color); padding: 12px 30px; font-size: 18px;
-            font-family: var(--font-main); cursor: pointer; border-radius: 4px;
-            transition: all 0.2s; font-weight: bold;
+        .file-title .svg-icon {
+            margin-top: 2px;
         }
-        .action-btn:hover { background-color: var(--primary-color); color: var(--bg-color); box-shadow: 0 0 15px var(--primary-color); }
+        
+        .file-item a {
+            color: var(--text-main);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .file-item a:hover {
+            color: var(--neon-cyan);
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-left: 32px; /* Aligns with text past the icon */
+        }
+
+        .index-tag {
+            font-size: 0.75em;
+            font-family: "JetBrains Mono", monospace;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(63, 185, 80, 0.1); 
+            color: var(--neon-green);
+            border: 1px solid rgba(63, 185, 80, 0.2);
+            white-space: nowrap;
+            box-shadow: 0 0 6px rgba(63, 185, 80, 0.1);
+        }
+
+        .template-tag {
+            font-size: 0.75em;
+            font-family: "JetBrains Mono", monospace;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(188, 140, 255, 0.1); 
+            color: var(--neon-purple);
+            border: 1px solid rgba(188, 140, 255, 0.2);
+            white-space: nowrap;
+            box-shadow: 0 0 6px rgba(188, 140, 255, 0.1);
+        }
+
+        /* ==================== 不蒜子统计页脚专属样式 ==================== */
+        .analytics-footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.8em;
+            color: rgba(201, 209, 217, 0.4);
+        }
+        .analytics-footer .neon-text {
+            color: var(--neon-cyan);
+            font-weight: bold;
+            margin: 0 4px;
+            text-shadow: 0 0 5px rgba(88, 166, 255, 0.3);
+        }
+        .analytics-footer .divider {
+            color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ==================== 小游戏入口按钮 ==================== */
+        .game-entry-btn {
+            margin-left: auto;
+            font-family: "JetBrains Mono", -apple-system, sans-serif;
+            color: var(--neon-green);
+            text-decoration: none;
+            padding: 4px 12px;
+            border: 1px solid rgba(63, 185, 80, 0.3);
+            border-radius: 6px;
+            background: rgba(63, 185, 80, 0.1);
+            transition: all 0.3s ease;
+        }
+        .game-entry-btn:hover {
+            background: rgba(63, 185, 80, 0.2);
+            border-color: var(--neon-green);
+            color: #ffffff;
+            box-shadow: 0 0 8px rgba(63, 185, 80, 0.3);
+            transform: translateY(-2px);
+        }
     </style>
+    <script>
+        function toggleFolder(el) {
+            el.classList.toggle('open');
+            const content = el.nextElementSibling;
+            if (content && content.classList.contains('folder-content')) {
+                content.classList.toggle('open');
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // 鼠标微光追踪
+            document.addEventListener('mousemove', (e) => {
+                document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+                document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+            });
+            
+            // 飞入动画观察器
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.05 });
+            document.querySelectorAll('.container > *').forEach(el => observer.observe(el));
+        });
+    </script>
 </head>
 <body>
-    <div id="game-container">
-        <div id="start-screen" class="menu-screen">
-            <h1>SYSTEM BOOT</h1>
-            <p>你是 JVM（Java虚拟机）。<br><br>愚蠢的人类总是压榨你的性能，写出千疮百孔的代码。<br>现在，抛出空指针异常，把他们的代码全部消灭掉吧！</p>
-            <button id="begin-btn" class="action-btn">execute()</button>
+    <div class="container" data-file='NoteBook Index'>
+        <div class="card-header">
+            <span class="status-dot"></span><span class="path">/NoteBook/index.html</span><span class="cursor">_</span>
+            <!-- 小游戏入口，占位符链接 -->
+            <a href="https://example.com/mini-game" class="game-entry-btn" target="_blank" title="玩个小游戏放松一下">🎮 休息一下</a>
         </div>
+        <h1>NoteBook Index</h1>
+        <div class="directory-wrapper">
+<div class="folder-list">
+<div class="folder-wrapper">
+<div class="folder-item" onclick="toggleFolder(this)"><svg class="svg-icon folder-icon" viewBox="0 0 16 16"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.543l-1.6-1.684A1.75 1.75 0 0 0 4.715 1H1.75Z"/></svg> <span>刷题记录</span></div>
+<div class="folder-content">
+<div class="file-grid">
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/「DFS、回溯法」P1219-八皇后.html">「DFS、回溯法」P1219-八皇后</a></div>
+<div class="tag-container"><span class="index-tag">递归</span><span class="index-tag">DFS</span><span class="index-tag">回溯法</span><span class="index-tag">回溯法</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/「前缀和」P9426 抓娃娃.html">「前缀和」P9426 抓娃娃</a></div>
+<div class="tag-container"><span class="index-tag">前缀和</span><span class="index-tag">扩倍规避小数</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/「动态规划、图论」P2196 挖地雷.html">「动态规划、图论」P2196 挖地雷</a></div>
+<div class="tag-container"><span class="index-tag">动态规划</span><span class="index-tag">图论</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/「字符串哈希」P3370 【模板】字符串哈希.html">「字符串哈希」P3370 【模板】字符串哈希</a></div>
+<div class="tag-container"><span class="index-tag">哈希</span><span class="index-tag">字符串</span><span class="index-tag">字符串哈希</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/「并查集」P1551 亲戚.html">「并查集」P1551 亲戚</a></div>
+<div class="tag-container"><span class="index-tag">并查集</span><span class="index-tag">并查集的实现</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/「归并排序」P1908 逆序数.html">「归并排序」P1908 逆序数</a></div>
+<div class="tag-container"><span class="index-tag">排序</span><span class="index-tag">递归</span><span class="index-tag">归并排序</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/「数学、枚举」P1403 约数研究.html">「数学、枚举」P1403 约数研究</a></div>
+<div class="tag-container"><span class="index-tag">数学</span><span class="index-tag">枚举</span><span class="index-tag">整除分块</span><span class="index-tag">整除分块</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/【BFS】P1443 马的遍历.html">【BFS】P1443 马的遍历</a></div>
+<div class="tag-container"><span class="index-tag">BFS</span><span class="index-tag">队列实现的广度优先搜索</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/【BFS】P2895 Meteor Shower S.html">【BFS】P2895 Meteor Shower S</a></div>
+<div class="tag-container"><span class="index-tag">BFS</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/【DFS、BFS】P5318 【深基18.例3】查找文献.html">【DFS、BFS】P5318 【深基18.例3】查找文献</a></div>
+<div class="tag-container"><span class="index-tag">DFS</span><span class="index-tag">BFS</span><span class="index-tag">非递归深搜广搜</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/【二叉树、递归】P4715 【深基16.例1】淘汰赛.html">【二叉树、递归】P4715 【深基16.例1】淘汰赛</a></div>
+<div class="tag-container"><span class="index-tag">二叉树的建立</span><span class="index-tag">二叉树</span><span class="index-tag">递归</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/【二叉树】P1827 USACO3.4 美国血统 American Heritage.html">【二叉树】P1827 USACO3.4 美国血统 American Heritage</a></div>
+<div class="tag-container"><span class="index-tag">二叉树</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/【数学】几何问题.html">【数学】几何问题</a></div>
+<div class="tag-container"><span class="index-tag">几何</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/【链表】P1160 队列安排.html">【链表】P1160 队列安排</a></div>
+<div class="tag-container"><span class="index-tag">链表</span><span class="index-tag">链表实现</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/【队列、模拟】P2058 NOIP-2016-普及组 海港.html">【队列、模拟】P2058 NOIP-2016-普及组 海港</a></div>
+<div class="tag-container"><span class="index-tag">队列</span><span class="index-tag">模拟</span></div>
+</div>
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/刷题记录/【队列、模拟】P4387 【深基15.习9】验证栈序列.html">【队列、模拟】P4387 【深基15.习9】验证栈序列</a></div>
+<div class="tag-container"><span class="index-tag">队列</span><span class="index-tag">模拟</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="folder-wrapper">
+<div class="folder-item" onclick="toggleFolder(this)"><svg class="svg-icon folder-icon" viewBox="0 0 16 16"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.543l-1.6-1.684A1.75 1.75 0 0 0 4.715 1H1.75Z"/></svg> <span>基础知识</span></div>
+<div class="folder-content">
+<div class="folder-list">
+<div class="folder-wrapper">
+<div class="folder-item" onclick="toggleFolder(this)"><svg class="svg-icon folder-icon" viewBox="0 0 16 16"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.543l-1.6-1.684A1.75 1.75 0 0 0 4.715 1H1.75Z"/></svg> <span>C++</span></div>
+<div class="folder-content">
+<div class="file-grid">
+<div class="file-item">
+<div class="file-title"><svg class="svg-icon file-icon" viewBox="0 0 16 16"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H3.75A1.75 1.75 0 0 1 2 14.25V1.75Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5H3.75Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-2.938-2.938Z"/></svg> <a href="NoteBook/基础知识/C++/类与对象.html">类与对象</a></div>
 
-        <div id="ui-layer">
-            <div class="board">已拦截代码(Score): <span id="score">0</span></div>
-            <div class="board">系统负载剩余(HP): <span id="lives">20</span></div>
-        </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
         
-        <div id="execution-zone">[成功执行区域] 危险：允许代码越界将增加系统负载</div>
-        <div id="player">JVM</div>
-
-        <div id="game-over-screen" class="menu-screen">
-            <h1>OUT OF MEMORY</h1>
-            <p>系统负载过高，JVM 崩溃。</p>
-            <p>最终拦截代码量: <span id="final-score">0</span></p>
-            <button id="restart-btn" class="action-btn">reboot()</button>
+        <div class="analytics-footer">
+            <span id="busuanzi_container_site_pv" style="display: none;">
+                全站总访问量 <span id="busuanzi_value_site_pv" class="neon-text"></span> 次
+            </span>
+            <span class="divider">|</span>
+            <span id="busuanzi_container_site_uv" style="display: none;">
+                全站总访客数 <span id="busuanzi_value_site_uv" class="neon-text"></span> 人
+            </span>
         </div>
     </div>
-
-    <script>
-        const container = document.getElementById('game-container');
-        const scoreElement = document.getElementById('score');
-        const livesElement = document.getElementById('lives');
-        
-        // 菜单和UI元素
-        const startScreen = document.getElementById('start-screen');
-        const gameOverScreen = document.getElementById('game-over-screen');
-        const uiLayer = document.getElementById('ui-layer');
-        const executionZone = document.getElementById('execution-zone');
-        
-        const finalScoreElement = document.getElementById('final-score');
-        const playerElement = document.getElementById('player');
-
-        let score = 0;
-        let lives = 20; 
-        let gameActive = false; // 初始状态为 false，等待点击开始
-        let codeBlocks = [];
-        let bullets = [];
-        let playerX = window.innerWidth / 2;
-        let blockSpawnInterval;
-        
-        let isPointerDown = false;
-        let fireCooldown = 0;
-        
-        // 【修改点】冷却时间缩短，提升火力。10帧大概是 160ms 发射一次，可以形成较密的弹幕
-        const FIRE_RATE_LIMIT = 10; 
-
-        const codeSnippets = [
-            `String data = null;\ndata.length();`,
-            `List items = null;\nitems.clear();`,
-            `User u = null;\nu.getName();`,
-            `int[] arr = null;\narr[0] = 1;`
-        ];
-
-        const errorMsgs = [
-            `Exception in thread "main" java.lang.NullPointerException: Cannot invoke "String.length()" because "data" is null\n\tat com.jvm.defender.StringOps.process(StringOps.java:42)\n\tat com.jvm.defender.Main.main(Main.java:15)`,
-            `Exception in thread "main" java.lang.NullPointerException: Cannot invoke "java.util.List.clear()" because "items" is null\n\tat com.jvm.core.MemoryManager.flush(MemoryManager.java:118)\n\tat com.jvm.defender.Main.main(Main.java:18)`,
-            `Exception in thread "main" java.lang.NullPointerException: Cannot read field "name" because "u" is null\n\tat com.jvm.entity.UserDao.fetchName(UserDao.java:88)\n\tat com.jvm.defender.Main.main(Main.java:22)`,
-            `Exception in thread "main" java.lang.NullPointerException: Cannot store to null array\n\tat com.jvm.utils.ArrayHelper.mutate(ArrayHelper.java:102)\n\tat com.jvm.defender.Main.main(Main.java:25)`
-        ];
-
-        const blockVariants = [
-            { name: 'Normal', hp: 2, speed: 1.2, color: '#d19a66', score: 10 },
-            { name: 'Tank', hp: 6, speed: 0.6, color: '#e06c75', score: 30 }, // 稍微增加了血牛的血量
-            { name: 'Fast', hp: 1, speed: 2.2, color: '#56b6c2', score: 15 }
-        ];
-
-        class CodeBlock {
-            constructor() {
-                this.element = document.createElement('div');
-                this.element.className = 'code-block';
-                
-                const snipIdx = Math.floor(Math.random() * codeSnippets.length);
-                const variant = blockVariants[Math.floor(Math.random() * blockVariants.length)];
-                
-                this.hp = variant.hp;
-                this.maxHp = variant.hp;
-                this.speedMult = variant.speed;
-                this.pointValue = variant.score;
-                this.errorText = errorMsgs[snipIdx];
-
-                this.element.innerHTML = `
-                    <div class="hp-bar" style="background-color: ${variant.color}"></div>
-                    <span style="color: ${variant.color}">${codeSnippets[snipIdx]}</span>
-                `;
-                this.element.style.border = `1px solid ${variant.color}`;
-                
-                container.appendChild(this.element);
-
-                const rect = this.element.getBoundingClientRect();
-                this.width = rect.width;
-                this.height = rect.height;
-                this.x = Math.random() * (window.innerWidth - this.width);
-                this.y = -this.height;
-                
-                let baseSpeed = 1 + (score / 500);
-                this.speed = baseSpeed * this.speedMult; 
-                this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
-            }
-
-            takeDamage() {
-                this.hp--;
-                const hpBar = this.element.querySelector('.hp-bar');
-                if(hpBar) hpBar.style.width = `${(this.hp / this.maxHp) * 100}%`;
-                return this.hp <= 0;
-            }
-
-            update() {
-                this.y += this.speed;
-                this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
-
-                if (this.y + this.height > window.innerHeight - 60) {
-                    this.remove();
-                    return false; 
-                }
-                return true;
-            }
-
-            remove() { this.element.remove(); }
-        }
-
-        class Bullet {
-            constructor(startX) {
-                this.element = document.createElement('div');
-                this.element.className = 'bullet';
-                this.element.textContent = 'NullPointerException';
-                container.appendChild(this.element);
-
-                const rect = this.element.getBoundingClientRect();
-                this.width = rect.width;
-                this.height = rect.height;
-                
-                this.x = startX - (this.width / 2);
-                this.y = window.innerHeight - 90;
-                // 子弹速度稍微调快一点点配合高射速
-                this.speed = 8;
-                this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
-            }
-
-            update() {
-                this.y -= this.speed;
-                this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
-                if (this.y < -this.height) {
-                    this.remove();
-                    return false; 
-                }
-                return true;
-            }
-
-            remove() { this.element.remove(); }
-        }
-
-        function createErrorExplosion(x, y, message) {
-            const exp = document.createElement('div');
-            exp.className = 'error-explosion';
-            exp.textContent = message;
-            exp.style.left = x + 'px';
-            exp.style.top = y + 'px';
-            container.appendChild(exp);
-            exp.addEventListener('animationend', () => exp.remove());
-        }
-
-        function spawnCodeBlock() {
-            if (!gameActive) return;
-            codeBlocks.push(new CodeBlock());
-            
-            let spawnRate = Math.max(300, 1000 - score * 4);
-            clearInterval(blockSpawnInterval);
-            blockSpawnInterval = setInterval(spawnCodeBlock, spawnRate);
-        }
-
-        function updateScore(amount) {
-            score += amount;
-            if (score < 0) score = 0; 
-            scoreElement.textContent = score;
-            
-            if(amount < 0) {
-                scoreElement.style.color = 'var(--error-color)';
-                setTimeout(() => scoreElement.style.color = 'var(--success-color)', 300);
-            }
-        }
-
-        function checkCollisions() {
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                for (let j = codeBlocks.length - 1; j >= 0; j--) {
-                    let b = bullets[i];
-                    let c = codeBlocks[j];
-                    if (b.x < c.x + c.width && b.x + b.width > c.x &&
-                        b.y < c.y + c.height && b.y + b.height > c.y) {
-                        
-                        b.remove();
-                        bullets.splice(i, 1);
-
-                        if (c.takeDamage()) {
-                            const cx = c.x; const cy = c.y; const err = c.errorText; const pts = c.pointValue;
-                            c.remove();
-                            codeBlocks.splice(j, 1);
-                            createErrorExplosion(cx, cy, err);
-                            updateScore(pts); 
-                        }
-                        break; 
-                    }
-                }
-            }
-        }
-
-        function gameLoop() {
-            if (!gameActive) return;
-
-            if (isPointerDown && fireCooldown <= 0) {
-                bullets.push(new Bullet(playerX));
-                fireCooldown = FIRE_RATE_LIMIT; 
-            }
-            if (fireCooldown > 0) fireCooldown--;
-
-            for (let i = codeBlocks.length - 1; i >= 0; i--) {
-                if (!codeBlocks[i].update()) {
-                    codeBlocks.splice(i, 1);
-                    updateScore(-15); 
-                    lives--;
-                    livesElement.textContent = lives;
-                    
-                    container.style.boxShadow = "inset 0 0 50px rgba(224, 108, 117, 0.5)";
-                    setTimeout(() => container.style.boxShadow = "none", 100);
-
-                    if (lives <= 0) endGame();
-                }
-            }
-
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                if (!bullets[i].update()) bullets.splice(i, 1);
-            }
-
-            checkCollisions();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function handlePlayerMove(clientX) {
-            if (!gameActive) return;
-            playerX = Math.max(23, Math.min(window.innerWidth - 23, clientX));
-            playerElement.style.left = playerX + 'px';
-        }
-
-        function startGame() {
-            // 隐藏菜单，显示游戏UI
-            startScreen.style.display = 'none';
-            gameOverScreen.style.display = 'none';
-            uiLayer.style.display = 'flex';
-            executionZone.style.display = 'flex';
-            playerElement.style.display = 'flex';
-
-            // 重置状态
-            score = 0; lives = 20; gameActive = true;
-            scoreElement.textContent = score; livesElement.textContent = lives;
-
-            // 清理上一局残留
-            codeBlocks.forEach(b => b.remove());
-            bullets.forEach(b => b.remove());
-            document.querySelectorAll('.error-explosion').forEach(e => e.remove());
-            codeBlocks = []; bullets = []; isPointerDown = false;
-
-            // 居中玩家
-            handlePlayerMove(window.innerWidth / 2);
-
-            if (blockSpawnInterval) clearInterval(blockSpawnInterval);
-            blockSpawnInterval = setInterval(spawnCodeBlock, 800);
-
-            gameLoop();
-        }
-
-        function endGame() {
-            gameActive = false;
-            finalScoreElement.textContent = score;
-            
-            // 隐藏游戏UI，显示结束菜单
-            uiLayer.style.display = 'none';
-            executionZone.style.display = 'none';
-            playerElement.style.display = 'none';
-            gameOverScreen.style.display = 'flex';
-            
-            clearInterval(blockSpawnInterval);
-        }
-
-        // 按钮事件绑定
-        document.getElementById('begin-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-
-        container.addEventListener('pointerdown', (e) => {
-            // 点击按钮时不触发开火
-            if (e.target.tagName.toLowerCase() === 'button') return;
-            if (gameActive) {
-                isPointerDown = true;
-                handlePlayerMove(e.clientX);
-                e.preventDefault(); 
-            }
-        });
-
-        container.addEventListener('pointermove', (e) => {
-            if (gameActive && (isPointerDown || e.pointerType === 'mouse')) {
-                handlePlayerMove(e.clientX);
-            }
-        });
-
-        window.addEventListener('pointerup', () => isPointerDown = false);
-        window.addEventListener('pointercancel', () => isPointerDown = false);
-
-    </script>
 </body>
 </html>

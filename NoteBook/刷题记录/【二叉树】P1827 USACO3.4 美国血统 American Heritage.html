@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>刷题记录/【二叉树】P1827 USACO3.4 美国血统 American Heritage</title>
+    <!-- 引入不蒜子核心脚本 -->
+    <script src="//cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script>
+</head>
+<style>
+    /* 1. 定义赛博朋克风格的全局霓虹色变量 */
+    :root {
+        --bg-main: #0d1117;
+        /* 极深邃的背景黑 */
+        --panel-bg: rgba(22, 27, 34, 0.6);
+        /* 半透明面板层 */
+        --text-main: #c9d1d9;
+        /* 柔和的护眼灰白 */
+        --neon-cyan: #58a6ff;
+        /* 霓虹青（用于链接） */
+        --neon-purple: #bc8cff;
+        /* 霓虹紫（用于强调） */
+        --neon-green: #3fb950;
+        /* 霓虹绿（用于引用） */
+    }
+
+    /* 2. 页面基础设置与微光背景 */
+    body {
+        background-color: var(--bg-main);
+        /* 在右上角打一束极其微弱的径向渐变蓝光，打破纯黑的死板 */
+        background-image: radial-gradient(circle at top right, #1f2937, transparent 500px);
+        color: var(--text-main);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.7;
+        margin: 0;
+        padding: 40px 20px;
+        /* 确保主体内容居中 */
+    }
+
+    /* 1. 行内代码块样式 */
+    code {
+        color: #add8e6;
+        /* 浅蓝色 */
+        background-color: transparent;
+        /* 背景完全透明 */
+        font-family: Consolas, Monaco, 'Courier New', monospace;
+        padding: 0.2em 0.4em;
+    }
+
+    /* 排除被 Pygments 渲染的多行代码块中的 code，避免干扰 */
+    .source-code code,
+    .source-code pre {
+        color: inherit;
+        background-color: transparent !important;
+        padding: 0;
+    }
+
+    /* 2. 多行代码块容器样式 */
+    /* 去除所有嵌套容器的背景和边框，只保留最外层你自定义的背景（如有） */
+    .source-code,
+    .source-code table,
+    .source-code tbody,
+    .source-code tr,
+    .source-code td,
+    .source-code pre {
+        background-color: transparent !important;
+        border: none !important;
+        margin: 0;
+    }
+
+    /* 修复多出大块空白问题：阻断全局表格的宽占位 */
+    .source-code table {
+        width: auto !important;
+        table-layout: auto !important;
+    }
+    .source-code td.code {
+        width: 100% !important; /* 让代码部分占据剩余空间 */
+    }
+
+    /* 修复代码缩进太大：去除继承自全局表格的巨大 padding */
+    .source-code td {
+        padding: 0 !important;
+    }
+
+    /* 设置代码区域侧边距 */
+    .source-code .code pre {
+        padding-left: 12px !important;
+        tab-size: 4;
+        -moz-tab-size: 4;
+    }
+    
+    /* 新增：代码缩进参考线 (由 JS 动态生成) */
+    .indent-guide {
+        border-left: 1px solid rgba(255, 255, 255, 0.12);
+        margin-right: -1px; /* 抵消边框宽度，避免将后面的代码向右挤压 */
+    }
+
+    /* 3. 行号定制 (不居中、深蓝色、彻底去除隐性背景) */
+    .source-code .linenos, 
+    .source-code .linenos pre, 
+    .source-code .linenodiv,
+    .source-code .linenos .normal,
+    .source-code .linenos .special {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    .source-code .linenos {
+        color: #1e40af !important; /* 行号采用深蓝色 */
+        text-align: right !important; /* 靠右对齐（不居中） */
+        user-select: none;
+        padding-right: 12px !important; /* 缩小右侧间距 */
+        padding-left: 0 !important;
+        width: 1px !important; /* 强制行号列收缩到最窄，解决左侧大片空白 */
+        white-space: nowrap !important; /* 防止行号折行 */
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* 3. 主体内容容器：毛玻璃特效 */
+    /* 注意：你需要在你的 HTML 骨架 body 内套一层 <div class="container"> */
+    .container {
+        /* 1. 核心修复：使用 box-sizing 确保 padding 不会撑破 100% 宽度 */
+        box-sizing: border-box;
+
+        /* 2. 确保宽度自适应，max-width 只是上限 */
+        max-width: 900px;
+        width: 95%;
+        /* 在小屏幕上留出一点边距 */
+
+        margin: 0 auto;
+        background: var(--panel-bg);
+        padding: 70px 40px 40px;
+        /* 稍微缩小左右 padding 提高空间利用率 */
+        border-radius: 16px;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        position: relative;
+        overflow: hidden;
+        /* 防止内容（如表格）溢出卡片 */
+    }
+
+    /* 3. 针对表格和代码块的溢出处理，确保它们在小屏幕上可以横向滚动而不是撑开卡片 */
+    table,
+    .source-code {
+        max-width: 100%;
+        overflow-x: auto;
+        display: block;
+    }
+
+    /* 1. 定义终端光标闪烁动画 */
+    @keyframes blink {
+        50% {
+            opacity: 0;
+        }
+    }
+
+    /* 4. 酷炫的渐变色标题 */
+    h1,
+    h2,
+    h3 {
+        /* 从霓虹青到霓虹紫的线性渐变 */
+        background: linear-gradient(120deg, var(--neon-cyan), var(--neon-purple));
+        -webkit-background-clip: text;
+        /* 将背景裁剪到文字轮廓 */
+        -webkit-text-fill-color: transparent;
+        /* 隐藏原本的文字颜色 */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 10px;
+        margin-top: 1.5em;
+    }
+
+    /* 5. 带有滑动动画的超链接 */
+    a {
+        color: var(--neon-cyan);
+        text-decoration: none;
+        position: relative;
+        font-weight: 600;
+    }
+
+    /* 利用伪元素制作初始宽度为 0 的下划线 */
+    a::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        transform: scaleX(0);
+        height: 2px;
+        bottom: -2px;
+        left: 0;
+        background-color: var(--neon-cyan);
+        transform-origin: bottom right;
+        transition: transform 0.3s ease-out;
+        /* 动画过渡时间 */
+    }
+
+    /* 鼠标悬停时，下划线展开 */
+    a:hover::after {
+        transform: scaleX(1);
+        transform-origin: bottom left;
+    }
+
+    /* 6. 发光的黑客感引用块 */
+    blockquote {
+        border-left: 4px solid var(--neon-green);
+        background: linear-gradient(90deg, rgba(63, 185, 80, 0.1) 0%, transparent 100%);
+        margin: 1.5em 0;
+        padding: 15px 20px;
+        border-radius: 0 8px 8px 0;
+        color: #8b949e;
+    }
+
+    /* 7. Obsidian 语法 ==高亮== 的赛博渲染 */
+    mark {
+        background: rgba(188, 140, 255, 0.2);
+        color: var(--neon-purple);
+        padding: 2px 6px;
+        border-radius: 4px;
+        box-shadow: 0 0 10px rgba(188, 140, 255, 0.3);
+        /* 外发光光晕 */
+        font-weight: bold;
+    }
+
+    /* 8. 表格样式优化 */
+    table {
+        width: 100% !important;
+        /* 强制水平铺满 */
+        table-layout: auto;
+        /* 让内容自动分配空间，但总宽 100% */
+        border-collapse: collapse;
+        margin: 25px 0;
+        display: table;
+        /* ✅ 核心修改：恢复表格的原始显示属性 */
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 8px;
+        overflow: hidden;
+        /* 配合圆角使用 */
+    }
+
+    /* 3. 增强表格内部质感 */
+    th {
+        background-color: rgba(88, 166, 255, 0.1);
+        /* 霓虹青半透明 */
+        color: var(--neon-cyan);
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.85em;
+        letter-spacing: 1px;
+    }
+
+    td,
+    th {
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 14px 18px;
+        text-align: left;
+    }
+
+    /* 4. 隔行变色效果：增加层次感 */
+    tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.01);
+    }
+
+    tr:hover {
+        background-color: rgba(88, 166, 255, 0.05);
+        /* 鼠标悬停微亮 */
+    }
+
+    pre { line-height: 125%; }
+td.linenos .normal { color: #f1fa8c; background-color: #44475a; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #f1fa8c; background-color: #44475a; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #50fa7b; background-color: #6272a4; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #50fa7b; background-color: #6272a4; padding-left: 5px; padding-right: 5px; }
+.source-code .hll { background-color: #44475a }
+.source-code .c { color: #6272A4 } /* Comment */
+.source-code .err { color: #F8F8F2 } /* Error */
+.source-code .g { color: #F8F8F2 } /* Generic */
+.source-code .k { color: #FF79C6 } /* Keyword */
+.source-code .l { color: #F8F8F2 } /* Literal */
+.source-code .n { color: #F8F8F2 } /* Name */
+.source-code .o { color: #FF79C6 } /* Operator */
+.source-code .x { color: #F8F8F2 } /* Other */
+.source-code .p { color: #F8F8F2 } /* Punctuation */
+.source-code .ch { color: #6272A4 } /* Comment.Hashbang */
+.source-code .cm { color: #6272A4 } /* Comment.Multiline */
+.source-code .cp { color: #FF79C6 } /* Comment.Preproc */
+.source-code .cpf { color: #6272A4 } /* Comment.PreprocFile */
+.source-code .c1 { color: #6272A4 } /* Comment.Single */
+.source-code .cs { color: #6272A4 } /* Comment.Special */
+.source-code .gd { color: #8B080B } /* Generic.Deleted */
+.source-code .ge { color: #F8F8F2; text-decoration: underline } /* Generic.Emph */
+.source-code .ges { color: #F8F8F2; text-decoration: underline } /* Generic.EmphStrong */
+.source-code .gr { color: #F8F8F2 } /* Generic.Error */
+.source-code .gh { color: #F8F8F2; font-weight: bold } /* Generic.Heading */
+.source-code .gi { color: #F8F8F2; font-weight: bold } /* Generic.Inserted */
+.source-code .go { color: #44475A } /* Generic.Output */
+.source-code .gp { color: #F8F8F2 } /* Generic.Prompt */
+.source-code .gs { color: #F8F8F2 } /* Generic.Strong */
+.source-code .gu { color: #F8F8F2; font-weight: bold } /* Generic.Subheading */
+.source-code .gt { color: #F8F8F2 } /* Generic.Traceback */
+.source-code .kc { color: #FF79C6 } /* Keyword.Constant */
+.source-code .kd { color: #8BE9FD; font-style: italic } /* Keyword.Declaration */
+.source-code .kn { color: #FF79C6 } /* Keyword.Namespace */
+.source-code .kp { color: #FF79C6 } /* Keyword.Pseudo */
+.source-code .kr { color: #FF79C6 } /* Keyword.Reserved */
+.source-code .kt { color: #8BE9FD } /* Keyword.Type */
+.source-code .ld { color: #F8F8F2 } /* Literal.Date */
+.source-code .m { color: #FFB86C } /* Literal.Number */
+.source-code .s { color: #BD93F9 } /* Literal.String */
+.source-code .na { color: #50FA7B } /* Name.Attribute */
+.source-code .nb { color: #8BE9FD; font-style: italic } /* Name.Builtin */
+.source-code .nc { color: #50FA7B } /* Name.Class */
+.source-code .no { color: #F8F8F2 } /* Name.Constant */
+.source-code .nd { color: #F8F8F2 } /* Name.Decorator */
+.source-code .ni { color: #F8F8F2 } /* Name.Entity */
+.source-code .ne { color: #F8F8F2 } /* Name.Exception */
+.source-code .nf { color: #50FA7B } /* Name.Function */
+.source-code .nl { color: #8BE9FD; font-style: italic } /* Name.Label */
+.source-code .nn { color: #F8F8F2 } /* Name.Namespace */
+.source-code .nx { color: #F8F8F2 } /* Name.Other */
+.source-code .py { color: #F8F8F2 } /* Name.Property */
+.source-code .nt { color: #FF79C6 } /* Name.Tag */
+.source-code .nv { color: #8BE9FD; font-style: italic } /* Name.Variable */
+.source-code .ow { color: #FF79C6 } /* Operator.Word */
+.source-code .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.source-code .w { color: #F8F8F2 } /* Text.Whitespace */
+.source-code .mb { color: #FFB86C } /* Literal.Number.Bin */
+.source-code .mf { color: #FFB86C } /* Literal.Number.Float */
+.source-code .mh { color: #FFB86C } /* Literal.Number.Hex */
+.source-code .mi { color: #FFB86C } /* Literal.Number.Integer */
+.source-code .mo { color: #FFB86C } /* Literal.Number.Oct */
+.source-code .sa { color: #BD93F9 } /* Literal.String.Affix */
+.source-code .sb { color: #BD93F9 } /* Literal.String.Backtick */
+.source-code .sc { color: #BD93F9 } /* Literal.String.Char */
+.source-code .dl { color: #BD93F9 } /* Literal.String.Delimiter */
+.source-code .sd { color: #BD93F9 } /* Literal.String.Doc */
+.source-code .s2 { color: #BD93F9 } /* Literal.String.Double */
+.source-code .se { color: #BD93F9 } /* Literal.String.Escape */
+.source-code .sh { color: #BD93F9 } /* Literal.String.Heredoc */
+.source-code .si { color: #BD93F9 } /* Literal.String.Interpol */
+.source-code .sx { color: #BD93F9 } /* Literal.String.Other */
+.source-code .sr { color: #BD93F9 } /* Literal.String.Regex */
+.source-code .s1 { color: #BD93F9 } /* Literal.String.Single */
+.source-code .ss { color: #BD93F9 } /* Literal.String.Symbol */
+.source-code .bp { color: #F8F8F2; font-style: italic } /* Name.Builtin.Pseudo */
+.source-code .fm { color: #50FA7B } /* Name.Function.Magic */
+.source-code .vc { color: #8BE9FD; font-style: italic } /* Name.Variable.Class */
+.source-code .vg { color: #8BE9FD; font-style: italic } /* Name.Variable.Global */
+.source-code .vi { color: #8BE9FD; font-style: italic } /* Name.Variable.Instance */
+.source-code .vm { color: #8BE9FD; font-style: italic } /* Name.Variable.Magic */
+.source-code .il { color: #FFB86C } /* Literal.Number.Integer.Long */
+
+    /* 1. 重塑代码容器 */
+    .source-code {
+        /* 强制使用带透明度的极暗色，替代 monokai 的黄褐色 */
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        /* 极细的玻璃反光边框 */
+        border-radius: 10px;
+        /* 圆角 */
+        padding: 16px 20px !important;
+        /* 增加内边距让代码呼吸 */
+        margin: 1.5em 0;
+        /* 加入内阴影，制造出一种代码被“嵌”在屏幕里的物理深度感 */
+        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        overflow-x: auto;
+    }
+
+    /* 2. 优化字体排版 */
+    .source-code pre {
+        margin: 0;
+        /* 推荐几款极客最爱的等宽字体 */
+        font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+        font-size: 0.95em;
+        line-height: 1;
+    }
+
+    /* 3. 终极细节：赛博风自定义滚动条 (针对 WebKit 浏览器生效) */
+    .source-code::-webkit-scrollbar {
+        height: 8px;
+        /* 横向滚动条变细 */
+    }
+
+    .source-code::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+
+    .source-code::-webkit-scrollbar-thumb {
+        background: rgba(88, 166, 255, 0.3);
+        /* 使用你的 --neon-cyan 半透明 */
+        border-radius: 4px;
+    }
+
+    .source-code::-webkit-scrollbar-thumb:hover {
+        background: rgba(88, 166, 255, 0.8);
+        /* 鼠标悬停时亮起霓虹色 */
+    }
+
+    /* =========================================
+   飞入动画终极版：CSS 直接接管初始状态
+   ========================================= */
+
+    /* 1. 暴力初始化：容器内的所有子元素默认都是透明且下移的 */
+    .container>* {
+        opacity: 0;
+        transform: translateY(40px);
+        /* 贝塞尔曲线过渡 */
+        transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+            transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    /* 2. 触发状态：当 JS 贴上 is-visible 标签时，回到原位 */
+    .container>*.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* =========================================
+           环境微光：鼠标跟随动态光源
+           ========================================= */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        /* 核心修改： radial-gradient 的颜色转折点 */
+        background: radial-gradient(
+                /* 1. 将光晕半径从 600px 调小到 450px，让能量更聚焦 */
+                circle 450px at var(--mouse-x, 50vw) var(--mouse-y, 50vh),
+
+                /* 2. 刺眼内核：前 0% 到 20% 的区域，使用不透明度较高的青色 (0.3) */
+                rgba(88, 166, 255, 0.3) 0%,
+
+                /* 3. 过渡：从 20% 到 60% 快速衰减到极微弱的青色 (0.05) */
+                rgba(88, 166, 255, 0.05) 60%,
+
+                /* 4. 边缘：60% 往外完全透明 */
+                transparent 100%);
+        pointer-events: none;
+        z-index: -1;
+        will-change: background;
+    }
+
+    .card-header {
+        margin-bottom: 30px;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        padding-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8em;
+        color: rgba(201, 209, 217, 0.4);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--neon-green);
+        border-radius: 50%;
+        box-shadow: 0 0 8px var(--neon-green);
+    }
+
+    .cursor {
+        color: var(--neon-cyan);
+        animation: blink 1s step-end infinite;
+    }
+
+    /* =========================================
+   强化加粗文本 (Strong/Bold) 样式
+   ========================================= */
+    strong {
+        /* 1. 提升亮度：使用纯白色，与周围的灰白色文字形成对比 */
+        color: #ffffff;
+
+        /* 2. 增加字重：确保使用最高级别的粗细 */
+        font-weight: 800;
+
+        /* 3. 霓虹微光：给加粗文字增加一层非常淡的青色光晕，使其跃然纸上 */
+        text-shadow: 0 0 8px rgba(88, 166, 255, 0.3);
+
+        /* 4. 间距优化：稍微增加字母间距，防止粗体字显得太挤 */
+        letter-spacing: 0.5px;
+
+        /* 5. 装饰性下划线（可选）：如果想更醒目，可以加一条淡淡的虚线下划线 */
+        border-bottom: 1px dashed rgba(88, 166, 255, 0.2);
+    }
+
+    .metadata-panel {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(88, 166, 255, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 35px;
+        /* 与正文拉开距离 */
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        /* 让面板也带有飞入动画的初始状态 */
+    }
+
+    .meta-key {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7em;
+        color: var(--neon-cyan);
+        opacity: 0.6;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .meta-value {
+        font-size: 0.9em;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    .meta-value a {
+        color: var(--neon-green) !important;
+        text-shadow: 0 0 5px rgba(63, 185, 80, 0.3);
+    }
+
+    /* 图片外层容器，负责居中和间距 */
+    .img-wrapper {
+        display: flex;
+        justify-content: center;
+        margin: 30px 0;
+        width: 100%;
+    }
+
+    /* 图片本体样式 */
+    .img-wrapper img {
+        max-width: 100%;
+        /* 确保不会超出卡片宽度 */
+        height: auto;
+        border-radius: 12px;
+        border: 2px solid rgba(88, 166, 255, 0.2);
+        /* 霓虹青边框 */
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(88, 166, 255, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: zoom-in;
+    }
+
+    /* 鼠标悬停时轻微放大并加强光晕 */
+    .img-wrapper img:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 30px rgba(88, 166, 255, 0.3);
+        border-color: var(--neon-cyan);
+    }
+
+    /* 9. 不蒜子统计页脚样式 */
+    .analytics-footer {
+        margin-top: 50px;
+        padding-top: 20px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8em;
+        color: rgba(201, 209, 217, 0.4);
+    }
+    .analytics-footer .neon-text {
+        color: var(--neon-cyan);
+        font-weight: bold;
+        margin: 0 4px;
+        text-shadow: 0 0 5px rgba(88, 166, 255, 0.3);
+    }
+    .analytics-footer .divider {
+        color: rgba(255, 255, 255, 0.1);
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.05
+        });
+
+        document.querySelectorAll('.container > *').forEach(el => {
+            observer.observe(el);
+        });
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+        // --- 新增：鼠标微光追踪逻辑 ---
+        // 监听全局鼠标移动事件
+        document.addEventListener('mousemove', (e) => {
+            // 将鼠标的 X 和 Y 坐标（像素值）实时写入 body 的 CSS 变量中
+            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+        });
+
+        // --- 新增：精准代码缩进参考线 (JS 动态计算) ---
+        const TAB_SIZE = 4;
+        document.querySelectorAll('.source-code .code pre').forEach(pre => {
+            const lines = pre.innerHTML.split('\n');
+            const processedLines = lines.map(line => {
+                let newHtml = '';
+                let spaceCount = 0;
+                let inTag = false;
+                let i = 0;
+                
+                for (; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    // 跳过并保留高亮库生成的 HTML 标签（如 <span> ）
+                    if (char === '<') { inTag = true; newHtml += char; continue; }
+                    if (char === '>') { inTag = false; newHtml += char; continue; }
+                    if (inTag) { newHtml += char; continue; }
+                    
+                    // 精准处理行首的空格和制表符
+                    if (char === ' ') {
+                        spaceCount++;
+                        if (spaceCount % TAB_SIZE === 1) {
+                            // 每四个空格的开头插入一个带左边框的零宽字符
+                            newHtml += '<span class="indent-guide">&#8203;</span>';
+                        }
+                        newHtml += char;
+                    } else if (char === '\t') {
+                        if (spaceCount % TAB_SIZE === 0) {
+                            newHtml += '<span class="indent-guide">&#8203;</span>';
+                        }
+                        newHtml += char;
+                        spaceCount += TAB_SIZE;
+                    } else {
+                        // 只要遇到非空格的实质性代码字符，立刻停止处理，保证右侧不会有参考线
+                        break;
+                    }
+                }
+                // 拼接该行后续的所有代码
+                newHtml += line.slice(i);
+                return newHtml;
+            });
+            pre.innerHTML = processedLines.join('\n');
+        });
+
+        // --- 原有：飞入动画观察器逻辑 ---
+        const observer = new IntersectionObserver((entries) => {
+            // ... 保持原有代码不变 ...
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.05 });
+
+        document.querySelectorAll('.container > *').forEach(el => {
+            observer.observe(el);
+        });
+    });
+</script>
+
+<body>
+    <div class="container" data-file='刷题记录/【二叉树】P1827 USACO3.4 美国血统 American Heritage'>
+        <div class="card-header">
+            <span class="status-dot"></span>
+            <span class="path">NoteBook/刷题记录/【二叉树】P1827 USACO3.4 美国血统 American Heritage.md</span>
+            <span class="cursor">_</span>
+        </div>
+
+<div class="metadata-panel"><div class="meta-item"><span class="meta-key">知识点</span><span class="meta-tag">二叉树</span>&nbsp;</div><div class="meta-item"><span class="meta-key">题目链接</span><span class="meta-value"><a href="https://www.luogu.com.cn/problem/P1827" target="_blank">https://www.luogu.com.cn/problem/P1827</a></span></div><div class="meta-item"><span class="meta-key">难度(洛谷)</span><span class="meta-value">普及−</span></div></div><h1>题目分析：</h1>
+<p>很明显，题目希望我们根据中序遍历和前序遍历的结果，重建出这棵二叉树，然后再进行后序遍历。所以，要解这道题，要先明白二叉树的三种遍历方式，即<strong>前序遍历、中序遍历和后序遍历</strong>，到底是什么。</p>
+<p>要遍历一个二叉树，最常规的做法自然是使用深度优先搜索算法。我们需要从左右两个方向进行递归深入，这样一来，就有一个问题：我们应该在何时对节点进行操作？</p>
+<p>这是一个DFS函数的框架（边界条件判断已省略，<code>ls[i]</code>和<code>rs[i]</code>表示第i号节点的左右子节点编号）：</p>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="void dfs(int x){
+	...
+	dfs(ls[x]);
+	dfs(rs[x]);
+	...
+}
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">dfs</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">){</span>
+<span class="w">	</span><span class="p">...</span>
+<span class="w">	</span><span class="n">dfs</span><span class="p">(</span><span class="n">ls</span><span class="p">[</span><span class="n">x</span><span class="p">]);</span>
+<span class="w">	</span><span class="n">dfs</span><span class="p">(</span><span class="n">rs</span><span class="p">[</span><span class="n">x</span><span class="p">]);</span>
+<span class="w">	</span><span class="p">...</span>
+<span class="p">}</span>
+</pre></div></td></tr></table></div>
+</div>
+<p>假设我们只是将节点的只给打印出来，那么<code>cout&lt;&lt;vs[x]</code>应该放在哪里？我们可以把它放在进入下层递归之前，也可以把它放在进入下一层递归之后，当然也可以把它放在两侧递归之间。很显然，<strong>不同的位置会导致遍历顺序发生改变。</strong></p>
+<p>以此二叉树为例：</p>
+<div class="img-wrapper"><img src="../image/美国血统/Gemini_Generated_Image_1coxl91coxl91cox.png" alt="Gemini_Generated_Image_1coxl91coxl91cox"></div>
+
+<p>不同放置位置的区别如下（<strong>处理逻辑在哪就叫什么序遍历</strong>）：</p>
+<table>
+<thead>
+<tr>
+<th>遍历方式</th>
+<th>处理逻辑位置</th>
+<th>遍历顺序</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前序遍历</td>
+<td>递归函数之前</td>
+<td><code>A-&gt;B-&gt;D-&gt;E-&gt;G-&gt;C-&gt;F</code></td>
+</tr>
+<tr>
+<td>中序遍历</td>
+<td>递归函数之间</td>
+<td><code>D-&gt;B-&gt;E-&gt;G-&gt;A-&gt;F-&gt;C</code></td>
+</tr>
+<tr>
+<td>后序遍历</td>
+<td>递归函数之后</td>
+<td><code>D-&gt;G-&gt;E-&gt;B-&gt;F-&gt;C-&gt;A</code></td>
+</tr>
+<tr>
+<td><em>点击下方链接观看动态演示：</em></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="img-wrapper"><img src="tree.html" alt="tree"></div>
+
+<p>调整二叉树，改成从根节点向左右延长出两个长条，可以很好地观察出三种遍历的特点：
+- <strong>前序遍历</strong>：先访问根节点，然后左右侧都正序遍历。
+- <strong>中序遍历</strong>：先左侧倒序遍历，再访问根节点，最后右侧正序遍历。
+- <strong>后序遍历</strong>：对左右侧都倒序遍历，最后再访问根节点。</p>
+<p>回到这道题，由于中序遍历的访问在递归函数之间，所以被访问节点就天然地形成了一道分界线：<strong>在某个节点之前被访问的节点必然在树上处于该节点的左子树中，而在之后被访问的节点也必然在右子树中。</strong></p>
+<p>再看前序遍历，它的处理逻辑处于递归函数之前，这意味着在访问了一个节点以后，它的下一步就是对左右子树进行递归。
+在这个时候，我们就可以从中序遍历序列中找出这个节点的左右子树部分 <em>（不存在找不到的情况，稍微想想就知道了）</em>。
+紧接着程序进入左子树进行下一层递归，在这层递归里，我们依然可以进行左右子树的划分。以此类推，就可以重建出这棵二叉树。</p>
+<h1>完整代码：</h1>
+<div class="code-block-wrapper" style="position: relative;">
+    <button class="copy-button" data-code="#include &lt;bits/stdc++.h&gt;
+using namespace std;
+string in, pre;
+int c=1;
+int ls[100005], rs[100005];
+int dfs(int l, int r) {
+	if (l &gt; r)return 0;
+	int i = l;
+	for (; i &lt;= r; i++) {
+		if (in[i] == pre[c]) {
+			c++;
+			flag = true;
+			break;
+		}
+	}
+	ls[i] = dfs(l, i - 1);
+	rs[i] = dfs(i + 1, r);
+	return i;
+}
+void post_order(int i) {
+	if (ls[i]!=0)post_order(ls[i]);
+	if (rs[i]!=0)post_order(rs[i]);
+	cout &lt;&lt; in[i];
+}
+int main() {
+	cin &gt;&gt; in &gt;&gt; pre;
+	int n = pre.size();
+	in = &quot; &quot; + in; pre = &quot; &quot; + pre;
+	post_order(dfs(1, n));
+}
+" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; color: #888;" title="复制" onclick="copyCode(this)">
+        <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg><svg class="icon-check" style="display: none; color: #4caf50;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+    </button>
+    <div class="source-code"><table class="source-codetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span></pre></div></td><td class="code"><div><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;bits/stdc++.h&gt;</span>
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">std</span><span class="p">;</span>
+<span class="n">string</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">pre</span><span class="p">;</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">ls</span><span class="p">[</span><span class="mi">100005</span><span class="p">],</span><span class="w"> </span><span class="n">rs</span><span class="p">[</span><span class="mi">100005</span><span class="p">];</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">dfs</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">l</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">l</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">r</span><span class="p">)</span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">l</span><span class="p">;</span>
+<span class="w">	</span><span class="k">for</span><span class="w"> </span><span class="p">(;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">r</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">pre</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">			</span><span class="n">c</span><span class="o">++</span><span class="p">;</span>
+<span class="w">			</span><span class="n">flag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">			</span><span class="k">break</span><span class="p">;</span>
+<span class="w">		</span><span class="p">}</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="w">	</span><span class="n">ls</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dfs</span><span class="p">(</span><span class="n">l</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="w">	</span><span class="n">rs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dfs</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">);</span>
+<span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">post_order</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ls</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span><span class="n">post_order</span><span class="p">(</span><span class="n">ls</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span><span class="n">post_order</span><span class="p">(</span><span class="n">rs</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">	</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">in</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="p">}</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">	</span><span class="n">cin</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">pre</span><span class="p">;</span>
+<span class="w">	</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pre</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+<span class="w">	</span><span class="n">in</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">in</span><span class="p">;</span><span class="w"> </span><span class="n">pre</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">pre</span><span class="p">;</span>
+<span class="w">	</span><span class="n">post_order</span><span class="p">(</span><span class="n">dfs</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div></td></tr></table></div>
+</div>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
+function copyCode(btn) {
+    const codeText = btn.getAttribute('data-code');
+    navigator.clipboard.writeText(codeText).then(() => {
+        const iconCopy = btn.querySelector('.icon-copy');
+        const iconCheck = btn.querySelector('.icon-check');
+        iconCopy.style.display = 'none';
+        iconCheck.style.display = 'inline-block';
+        btn.addEventListener('mouseleave', function onMouseLeave() {
+            iconCopy.style.display = 'inline-block';
+            iconCheck.style.display = 'none';
+            btn.removeEventListener('mouseleave', onMouseLeave);
+        });
+    });
+}
+</script>
+
+        <div class="analytics-footer">
+            <span id="busuanzi_container_site_pv" style="display: none;">
+                全站访问量 <span id="busuanzi_value_site_pv" class="neon-text"></span> 次
+            </span>
+            <span class="divider">|</span>
+            <span id="busuanzi_container_site_uv" style="display: none;">
+                总访客数 <span id="busuanzi_value_site_uv" class="neon-text"></span> 人
+            </span>
+            <span class="divider">|</span>
+            <span id="busuanzi_container_page_pv" style="display: none;">
+                本文阅读量 <span id="busuanzi_value_page_pv" class="neon-text"></span> 次
+            </span>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
